@@ -1,16 +1,16 @@
 <!--
  Copyright (C) 2020-2025 The Project Lombok Authors.
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
   copies of the Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions:
-  
+
   The above copyright notice and this permission notice shall be included in
   all copies or substantial portions of the Software.
-  
+
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,7 +23,7 @@
 	<description>
 This buildfile is part of projectlombok.org. It takes care of compiling and running tests.
 	</description>
-	
+
 	<target name="test.formatter.compile" depends="deps">
 		<mkdir dir="build/ant" />
 		<ivy:compile ecj="true" srcdir="src/ant" includes="**/SimpleTestFormatter.java" destdir="build/ant" source="1.6" target="1.6">
@@ -31,7 +31,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			<classpath refid="cp.test" />
 		</ivy:compile>
 	</target>
-	
+
 	<target name="test.compile" depends="deps, compile" description="compiles the tests" unless="skip.tests">
 		<mkdir dir="build/tests" />
 		<ivy:compile destdir="build/teststubs" source="1.6" target="1.6" ecj="true" nowarn="true">
@@ -54,7 +54,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			<src path="test/stubs" />
 		</ivy:compile>
 	</target>
-	
+
 	<target name="test.eclipse.compile" depends="deps.eclipse.oxygen, compile" description="compiles the eclipse tests" unless="skip.tests">
 		<mkdir dir="build/tests" />
 		<path id="cp.eclipse">
@@ -72,7 +72,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			<src path="test/eclipse/src" />
 		</ivy:compile>
 	</target>
-	
+
 	<target name="test.ecj11.call" depends="deps, dist" description="Runs a few ecj-specific tests" unless="skip.tests">
 		<java jar="lib/ecj11/org.eclipse.jdt-ecj.jar" fork="true" failonerror="true">
 			<jvmarg value="-javaagent:dist/lombok.jar=ecj" />
@@ -80,9 +80,9 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 		</java>
 		<echo>run ecj11 with a test file to confirm agent injection works: OK</echo>
 	</target>
-	
+
 	<property name="test.limitmodules">--limit-modules java.base,jdk.unsupported</property>
-	
+
 	<target name="test.javac6" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using javac6 as underlying compiler">
 		<echo>Running TestJavac on JVM${ant.java.version}, with lowest supported javac: 1.6.</echo>
 		<junit haltonfailure="yes" fork="true" forkmode="once">
@@ -101,7 +101,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			<test name="lombok.TestJavac" />
 		</junit>
 	</target>
-	
+
 	<target name="test.javac8" depends="test.compile, test.formatter.compile, deps.jdk8-runtime" description="runs the tests on your default VM, using javac8 as underlying compiler">
 		<echo>Running TestJavac on JVM${ant.java.version}, with javac: 1.8.</echo>
 		<junit haltonfailure="yes" fork="true" forkmode="once">
@@ -120,13 +120,13 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			<test name="lombok.TestJavac" />
 		</junit>
 	</target>
-	
+
 	<macrodef name="test.javacX">
 		<attribute name="version" />
 		<sequential>
 			<find-vm version="@{version}" />
 			<echo>Running TestJavac with JVM ${jvm.loc.@{version}}.</echo>
-		
+
 			<junit haltonfailure="yes" fork="true" forkmode="once" jvm="${jvm.loc.@{version}}/bin/${exe.java}">
 				<formatter classname="lombok.ant.SimpleTestFormatter" usefile="false" unless="tests.quiet" />
 				<classpath location="build/ant" />
@@ -139,34 +139,34 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			</junit>
 		</sequential>
 	</macrodef>
-	
+
 	<!-- 11 is LTS -->
 	<target name="test.javac11" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using javac11 as underlying compiler">
 		<test.javacX version="11" />
 	</target>
-	
+
 	<!-- 17 is LTS -->
 	<target name="test.javac17" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using javac17 as underlying compiler">
 		<test.javacX version="17" />
 	</target>
-	
+
 	<!-- 21 is LTS -->
 	<target name="test.javac21" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using javac21 as underlying compiler">
 		<test.javacX version="21" />
 	</target>
-	
+
 	<!-- For non-LTS versions, feel free to aggressively update these to the current non-LTS openjdk version, and delete them once they roll out of the 6 month window. -->
-	
+
 	<!-- 24 is non-LTS, but the current release -->
 	<target name="test.javac24" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using javac24 as underlying compiler">
 		<test.javacX version="24" />
 	</target>
-	
+
 	<!-- 25 is LTS -->
 	<target name="test.javac25" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using javac25 as underlying compiler">
 		<test.javacX version="25" />
 	</target>
-	
+
 	<target name="test.javacCurrent" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, using its javac as underlying compiler">
 		<echo>Running TestJavac on JVM${ant.java.version}, with the javac built into your VM distributon.</echo>
 		<junit haltonfailure="yes" fork="true" forkmode="once">
@@ -180,7 +180,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			<test name="lombok.TestJavac" />
 		</junit>
 	</target>
-	
+
 	<macrodef name="test.eclipse-X">
 		<attribute name="version" />
 		<attribute name="compiler.compliance.level" default="latest" />
@@ -206,31 +206,31 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			</junit>
 		</sequential>
 	</macrodef>
-	
+
 	<target name="test.eclipse-oxygen" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the oxygen release of eclipse">
 		<test.eclipse-X version="oxygen" />
 	</target>
-	
+
 	<target name="test.eclipse-202006" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the 2020-06 release of eclipse">
 		<fetchdep.eclipse version="202006" />
 		<test.eclipse-X version="202006" />
 	</target>
-	
+
 	<target name="test.eclipse-202006-jdk8" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the 2020-06 release of eclipse with compiler compliance level 8">
 		<fetchdep.eclipse version="202006" />
 		<test.eclipse-X version="202006" compiler.compliance.level="8" />
 	</target>
-	
+
 	<target name="test.eclipse-202403" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the 2024-03 release of eclipse">
 		<fetchdep.eclipse version="202403" />
 		<test.eclipse-X version="202403" />
 	</target>
-	
+
 	<target name="test.eclipse-202503" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the 2025-03 release of eclipse">
 		<fetchdep.eclipse version="202503" />
 		<test.eclipse-X version="202503" />
 	</target>
-	
+
 	<target name="test.eclipse-I-build" depends="test.compile, test.formatter.compile, deps.rtstubs18, compile.support" description="runs the tests on your default VM, testing the latest integration build of eclipse">
 		<fetchdep.eclipse.updatesite name="I-build" version="I-builds" target="lib/" resolveDependencies="false">
 			<bundles>
@@ -256,7 +256,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 		</path>
 		<test.eclipse-X version="I-build" />
 	</target>
-	
+
 	<macrodef name="test.eclipse-X-full">
 		<attribute name="version" />
 		<sequential>
@@ -287,23 +287,23 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			</junit>
 		</sequential>
 	</macrodef>
-	
+
 	<target name="test.eclipse-oxygen-full" depends="test.eclipse.compile, test.formatter.compile, deps.eclipse.oxygen" description="runs the full eclipse tests on your default VM, testing the oxygen release of eclipse">
 		<test.eclipse-X-full version="oxygen" />
 	</target>
-	
+
 	<target name="test.eclipse-202403-full" depends="test.eclipse.compile, test.formatter.compile, deps.eclipse.202403" description="runs the full eclipse tests on your default VM, testing the 2024-03 release of eclipse">
 		<test.eclipse-X-full version="2024-03" />
 	</target>
-	
+
 	<target name="test.eclipse-202503-full" depends="test.eclipse.compile, test.formatter.compile, deps.eclipse.202503" description="runs the full eclipse tests on your default VM, testing the 2025-03 release of eclipse">
 		<test.eclipse-X-full version="2025-03" />
 	</target>
-	
+
 	<target name="test.eclipse-I-build-full" depends="test.eclipse.compile, test.formatter.compile, deps.eclipse.integration" description="runs the full eclipse tests on your default VM, testing the latest integration build of eclipse">
 		<test.eclipse-X-full version="I-build" />
 	</target>
-	
+
 	<macrodef name="test.ecj-X">
 		<attribute name="version" />
 		<sequential>
@@ -324,27 +324,60 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 			</junit>
 		</sequential>
 	</macrodef>
-	
+
 	<target name="test.ecj11" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the ecj11 release">
 		<fetchdep.ecj version="11" />
 		<test.ecj-X version="11" />
 	</target>
-	
+
 	<target name="test.ecj14" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the ecj14 release">
 		<fetchdep.ecj version="14" />
 		<test.ecj-X version="14" />
 	</target>
-	
+
 	<target name="test.ecj16" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the ecj16 release">
 		<fetchdep.ecj version="16" />
 		<test.ecj-X version="16" />
 	</target>
-	
+
 	<target name="test.ecj19" depends="test.compile, test.formatter.compile" description="runs the tests on your default VM, testing the ecj19 release">
 		<fetchdep.ecj version="19" />
 		<test.ecj-X version="19" />
 	</target>
-	
+
+	<target name="benchmark.compile" depends="deps, compile" description="compiles the JMH benchmark" unless="skip.tests">
+		<mkdir dir="build/benchmark-gensrc" />
+		<mkdir dir="build/benchmark-classes" />
+		<!-- First pass: annotation processing to generate JMH harness code -->
+		<javac srcdir="test/benchmark/src" destdir="build/benchmark-classes" source="1.8" target="1.8" includeantruntime="false" fork="true">
+			<classpath refid="cp.benchmark" />
+			<classpath refid="packing.basedirs.path" />
+			<compilerarg value="-processorpath" />
+			<compilerarg pathref="cp.benchmark" />
+			<compilerarg value="-s" />
+			<compilerarg value="build/benchmark-gensrc" />
+		</javac>
+		<!-- Second pass: compile the generated harness code -->
+		<javac srcdir="build/benchmark-gensrc" destdir="build/benchmark-classes" source="1.8" target="1.8" includeantruntime="false" fork="true">
+			<classpath refid="cp.benchmark" />
+			<classpath refid="packing.basedirs.path" />
+			<classpath path="build/benchmark-classes" />
+		</javac>
+	</target>
+
+	<target name="benchmark" depends="benchmark.compile" description="runs the JMH benchmark for hasNonNullAnnotations">
+		<java classname="lombok.core.BenchmarkHasNonNullAnnotations" fork="true" failonerror="true">
+			<classpath refid="cp.benchmark" />
+			<classpath refid="packing.basedirs.path" />
+			<classpath path="build/benchmark-classes" />
+			<jvmarg value="--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED" />
+			<jvmarg value="--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED" />
+			<jvmarg value="--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED" />
+			<jvmarg value="--add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED" />
+			<jvmarg value="--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED" />
+		</java>
+	</target>
+
 	<target name="test" depends="test.javacCurrent, test.eclipse-202503" description="runs the tests against the default JVM, javac, and eclipse" />
 	<target name="test.broad" depends="test.javac8, test.javac17, test.javac21, test.javac24, test.javac25, test.eclipse-oxygen, test.eclipse-202503, test.eclipse-202006-jdk8" description="runs the tests against the default JVM, javac, and eclipse" />
 </project>
