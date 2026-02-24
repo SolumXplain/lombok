@@ -1,16 +1,16 @@
 <!--
   Copyright (C) 2020-2023 The Project Lombok Authors.
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
   copies of the Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions:
-  
+
   The above copyright notice and this permission notice shall be included in
   all copies or substantial portions of the Software.
-  
+
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,17 +24,17 @@
 This buildfile is part of projectlombok.org. It is responsible for building the website and all website-related aspects,
 such as applying the templates to produce the website, converting the changelog into HTML, and creating javadoc.
 	</description>
-	
+
 	<property name="web.root" value="https://projectlombok.org/" />
 	<property name="SNIPPET_TAB_STOP" value="2" />
-	
+
 	<target name="-website.clean">
 		<delete dir="build/website" quiet="true" />
 	</target>
-	
+
 	<!-- Fetches the current (latest) lombok available from projectlombok.org, tracking this 'latest available version' in ant properties -->
 	<target name="-website.fetch-version" depends="compile.support">
-		<java classname="lombok.website.FetchCurrentVersion" outputproperty="lombok.version.live" failonerror="true">
+		<java classname="lombok.website.FetchCurrentVersion" outputproperty="lombok.version.live" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
@@ -42,7 +42,7 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="${web.root}" />
 			<arg value="base" />
 		</java>
-		<java classname="lombok.website.FetchCurrentVersion" outputproperty="lombok.fullversion.live" failonerror="true">
+		<java classname="lombok.website.FetchCurrentVersion" outputproperty="lombok.fullversion.live" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
@@ -51,26 +51,26 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="full" />
 		</java>
 	</target>
-	
+
 	<target name="website.print-live-version" depends="-website.fetch-version" description="Print the current version of lombok available from projectlombok.org">
 		<echo>Live version: ${lombok.version.live}</echo>
 		<echo>Live full versionstring : ${lombok.fullversion.live}</echo>
 	</target>
-	
+
 	<target name="changelog.build" depends="version, deps, compile.support" description="Turns the current changelog (doc/changelog.markdown) into HTML">
 		<mkdir dir="build/website" />
-		<java classname="lombok.website.WebsiteMaker" failonerror="true">
+		<java classname="lombok.website.WebsiteMaker" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
-			</classpath> 
+			</classpath>
 			<arg value="${web.root}" />
 			<arg value="${lombok.version}" />
 			<arg value="${lombok.fullversion}" />
 			<arg value="changelog" />
 		</java>
 	</target>
-	
+
 	<macrodef name="website.make">
 		<attribute name="version" />
 		<attribute name="fullversion" />
@@ -81,8 +81,8 @@ such as applying the templates to produce the website, converting the changelog 
 				<fileset dir="website/resources" />
 				<fileset dir="." includes="LICENSE" />
 			</copy>
-			
-			<java classname="lombok.website.WebsiteMaker" failonerror="true">
+
+			<java classname="lombok.website.WebsiteMaker" failonerror="true" fork="true">
 				<classpath>
 					<path refid="cp.buildtools" />
 					<pathelement location="build/support" />
@@ -94,19 +94,19 @@ such as applying the templates to produce the website, converting the changelog 
 			</java>
 		</sequential>
 	</macrodef>
-	
+
 	<target name="website.release-build" depends="version, -website.clean, javadoc.build, compile.support">
 		<website.make version="${lombok.version}" fullversion="${lombok.fullversion}" cmd="all-newrelease" />
 	</target>
-	
+
 	<target name="website.build" depends="-website.fetch-version, -website.clean, compile.support" description="Builds the website based on current live version">
 		<website.make version="${lombok.version.live}" fullversion="${lombok.fullversion.live}" cmd="all" />
 	</target>
-	
+
 	<target name="website.open" depends="website.build, compile.support" description="Builds the website, then serves it locally, opening a browser.">
 		<local name="dir.build.website" />
 		<property name="dir.build.website" location="build/website" />
-		<java classname="lombok.website.RunSite" failonerror="true">
+		<java classname="lombok.website.RunSite" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
@@ -115,9 +115,9 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="open" />
 		</java>
 	</target>
-	
+
 	<target name="website.print-all-versions" depends="compile.support">
-		<java classname="lombok.website.WebsiteMaker" failonerror="true">
+		<java classname="lombok.website.WebsiteMaker" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
@@ -128,7 +128,7 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="print-allversions" />
 		</java>
 	</target>
-	
+
 	<target name="-website.init-hostgit">
 		<property name="loc.hostingGit" location="../website-cloudflare" />
 		<fail>
@@ -138,19 +138,19 @@ such as applying the templates to produce the website, converting the changelog 
 			</condition>
 		</fail>
 	</target>
-	
+
 	<target name="-website.copyto-hostgit">
 		<sync todir="${loc.hostingGit}/website">
 			<fileset dir="build/website" />
 		</sync>
 	</target>
-	
+
 	<target name="-website.pull-hostgit" depends="deps, -website.init-hostgit">
 		<exec executable="${exe.git}" failonerror="true" dir="${loc.hostingGit}">
 			<arg value="pull" />
 		</exec>
 	</target>
-	
+
 	<target name="-website.commit-and-push-hostgit">
 		<exec executable="${exe.git}" failonerror="true" dir="${loc.hostingGit}">
 			<arg value="add" />
@@ -165,11 +165,11 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="push" />
 		</exec>
 	</target>
-	
+
 	<target name="website.publish" depends="-website.pull-hostgit, website.build, -website.copyto-hostgit" description="Builds the website and copies it to the git repo serving as source for the cloudflare-hosted projectlombok.org site">
 		<antcall target="-website.commit-and-push-hostgit" />
 	</target>
-	
+
 	<target name="website.release-publish" depends="dist, -website.pull-hostgit, website.release-build, -website.copyto-hostgit" description="Builds the website and copies it to the git repo serving as source for the cloudflare-hosted projectlombok.org site">
 		<sync todir="${loc.hostingGit}/api">
 			<fileset dir="doc/api" />
@@ -178,7 +178,7 @@ such as applying the templates to produce the website, converting the changelog 
 		<copy file="dist/lombok-${lombok.version}.jar" todir="${loc.hostingGit}/releases" />
 		<antcall target="-website.commit-and-push-hostgit" />
 	</target>
-	
+
 	<target name="javadoc.build" description="Generates the javadoc" depends="version, compile" unless="skip.javadoc">
 		<delete dir="build/api" quiet="true" />
 		<delete dir="doc/api" quiet="true" />
@@ -233,10 +233,10 @@ such as applying the templates to produce the website, converting the changelog 
 		<echo append="true" file="doc/api/module-search-index.js"></echo>
 		<echo append="true" file="doc/api/tag-search-index.js"></echo>
 	</target>
-	
+
 	<target name="latest-changes.build" depends="compile.support, version" description="Creates the latest changes HTML file from the markdown in doc/changelog">
 		<mkdir dir="build/website" />
-		<java classname="lombok.website.WebsiteMaker" failonerror="true">
+		<java classname="lombok.website.WebsiteMaker" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
@@ -249,7 +249,7 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="build/latestchanges.html" />
 		</java>
 	</target>
-	
+
 	<target name="release.pack" depends="dist, website.release-build">
 		<tar destfile="dist/website-release.tar.bz2" compression="bzip2">
 			<tarfileset dir="dist" includes="lombok-${lombok.version}.jar" prefix="downloads/" />
@@ -258,13 +258,13 @@ such as applying the templates to produce the website, converting the changelog 
 			<tarfileset dir="build/website" includes="all-versions.html,download.html,download-edge.html" />
 		</tar>
 	</target>
-	
+
 	<target name="release.publish" depends="-test.release.version, maven, website.release-publish, eclipsep2.publish, maven.publish, -edge.publish" description="Deploys a new official lombok release everywhere: maven, website, p2 site" />
-	
+
 	<target name="edge.website" depends="compile.support, version, dist">
 		<delete quiet="true" file="build/website/download-edge.html" />
 		<mkdir dir="build/website-edge" />
-		<java classname="lombok.website.WebsiteMaker" failonerror="true">
+		<java classname="lombok.website.WebsiteMaker" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
@@ -277,18 +277,18 @@ such as applying the templates to produce the website, converting the changelog 
 			<arg value="build/website-edge/download-edge.html" />
 		</java>
 	</target>
-	
+
 	<target name="-edge.website.tohost" depends="edge.website, -website.init-hostgit, -website.pull-hostgit">
 		<copy file="build/website-edge/download-edge.html" todir="${loc.hostingGit}/website" />
 	</target>
-		
+
 	<target name="-edge.website.publish" depends="-edge.website.tohost, -website.commit-and-push-hostgit" />
-	
+
 	<target name="edge.publish" depends="-edge.website.publish, -edge.publish" description="Builds an edge release, sends it to the projectlombok.org server and deploys it by updating the download-edge link" />
-	
+
 	<target name="-edge.publish" depends="dist, maven.edge">
 		<copy file="dist/lombok-${lombok.version}.jar" tofile="build/edge-releases/lombok-edge.jar" />
-		<java classname="lombok.publish.PublishToBucket" failonerror="true">
+		<java classname="lombok.publish.PublishToBucket" failonerror="true" fork="true">
 			<classpath>
 				<path refid="cp.buildtools" />
 				<pathelement location="build/support" />
