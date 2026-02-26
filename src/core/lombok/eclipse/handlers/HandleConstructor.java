@@ -174,12 +174,14 @@ public class HandleConstructor {
 
 	private static List<EclipseNode> findFields(EclipseNode typeNode, boolean nullMarked) {
 		List<EclipseNode> fields = new ArrayList<EclipseNode>();
+		boolean isNullMarked = isNullMarked(typeNode);
+
 		for (EclipseNode child : typeNode.down()) {
 			if (child.getKind() != Kind.FIELD) continue;
 			FieldDeclaration fieldDecl = (FieldDeclaration) child.get();
 			if (!filterField(fieldDecl)) continue;
 			boolean isFinal = (fieldDecl.modifiers & ClassFileConstants.AccFinal) != 0;
-			boolean isNonNull = nullMarked && hasNonNullAnnotations(child);
+			boolean isNonNull = nullMarked && (isJSpecifyNonNull(isNullMarked, child) || hasNonNullAnnotations(child));
 			if ((isFinal || isNonNull) && fieldDecl.initialization == null) fields.add(child);
 		}
 		return fields;

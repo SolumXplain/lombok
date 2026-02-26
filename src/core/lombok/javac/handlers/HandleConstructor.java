@@ -151,6 +151,7 @@ public class HandleConstructor {
 
 	public static List<JavacNode> findFields(JavacNode typeNode, boolean nullMarked) {
 		ListBuffer<JavacNode> fields = new ListBuffer<JavacNode>();
+    boolean isNullMarked = isNullMarked(typeNode);
 		for (JavacNode child : typeNode.down()) {
 			if (child.getKind() != Kind.FIELD) continue;
 			JCVariableDecl fieldDecl = (JCVariableDecl) child.get();
@@ -160,7 +161,7 @@ public class HandleConstructor {
 			//Skip static fields.
 			if ((fieldFlags & Flags.STATIC) != 0) continue;
 			boolean isFinal = (fieldFlags & Flags.FINAL) != 0;
-			boolean isNonNull = nullMarked && hasNonNullAnnotations(child);
+			boolean isNonNull = nullMarked && (isJSpecifyNonNull(isNullMarked, child) || hasNonNullAnnotations(child));
 			if ((isFinal || isNonNull) && fieldDecl.init == null) fields.append(child);
 		}
 		return fields.toList();

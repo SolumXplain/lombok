@@ -8,7 +8,12 @@ class NullMarkedPlain {
 	Object o;
 	@java.lang.SuppressWarnings("all")
 	@lombok.Generated
-	public NullMarkedPlain() {
+	public NullMarkedPlain(final int i, final String s) {
+		if (s == null) {
+			throw new java.lang.NullPointerException("s is marked non-null but is null");
+		}
+		this.i = i;
+		this.s = s;
 	}
 	@java.lang.SuppressWarnings("all")
 	@lombok.Generated

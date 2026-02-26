@@ -4,8 +4,14 @@ import java.lang.annotation.*;
   int i;
   String s;
   @org.jspecify.annotations.Nullable Object o;
-  public @java.lang.SuppressWarnings("all") @lombok.Generated NullMarkedPlain() {
+  public @java.lang.SuppressWarnings("all") @lombok.Generated NullMarkedPlain(final int i, final String s) {
     super();
+    if ((s == null))
+        {
+          throw new java.lang.NullPointerException("s is marked non-null but is null");
+        }
+    this.i = i;
+    this.s = s;
   }
   public @java.lang.SuppressWarnings("all") @lombok.Generated int getI() {
     return this.i;
