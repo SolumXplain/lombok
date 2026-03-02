@@ -2242,6 +2242,8 @@ public class EclipseHandlerUtil {
 	 * variable name as message.
 	 */
 	public static Statement generateNullCheck(TypeReference type, char[] variable, EclipseNode sourceNode, String customMessage) {
+		if (type != null && isPrimitive(type)) return null;
+
 		NullCheckExceptionType exceptionType = sourceNode.getAst().readConfiguration(ConfigurationKeys.NON_NULL_EXCEPTION_TYPE);
 		if (exceptionType == null) exceptionType = NullCheckExceptionType.NULL_POINTER_EXCEPTION;
 
@@ -2250,7 +2252,6 @@ public class EclipseHandlerUtil {
 		int pS = source.sourceStart, pE = source.sourceEnd;
 		long p = (long) pS << 32 | pE;
 
-		if (type != null && isPrimitive(type)) return null;
 		SingleNameReference varName = new SingleNameReference(variable, p);
 		setGeneratedBy(varName, source);
 

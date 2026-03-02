@@ -1873,10 +1873,11 @@ public class JavacHandlerUtil {
 	 * local variable name as message.
 	 */
 	public static JCStatement generateNullCheck(JavacTreeMaker maker, JCExpression typeNode, Name varName, JavacNode source, String customMessage) {
+		if (typeNode != null && isPrimitive(typeNode)) return null;
+
 		NullCheckExceptionType exceptionType = source.getAst().readConfiguration(ConfigurationKeys.NON_NULL_EXCEPTION_TYPE);
 		if (exceptionType == null) exceptionType = NullCheckExceptionType.NULL_POINTER_EXCEPTION;
 
-		if (typeNode != null && isPrimitive(typeNode)) return null;
 		JCLiteral message = maker.Literal(exceptionType.toExceptionMessage(varName.toString(), customMessage));
 
 		LombokImmutableList<String> method = exceptionType.getMethod();
