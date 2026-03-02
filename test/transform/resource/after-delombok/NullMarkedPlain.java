@@ -34,9 +34,7 @@ class NullMarkedPlain {
 	@java.lang.SuppressWarnings("all")
 	@lombok.Generated
 	public void setS(final String s) {
-		if (s == null) {
-			throw new java.lang.NullPointerException("s is marked non-null but is null");
-		}
+		java.util.Objects.requireNonNull(s, "s is marked non-null but is null");
 		this.s = s;
 	}
 	@java.lang.SuppressWarnings("all")

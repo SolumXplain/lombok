@@ -1875,6 +1875,13 @@ public class JavacHandlerUtil {
 	public static JCStatement generateNullCheck(JavacTreeMaker maker, JCExpression typeNode, Name varName, JavacNode source, String customMessage) {
 		if (typeNode != null && isPrimitive(typeNode)) return null;
 
+		String checkMethod = source.getAst().readConfiguration(ConfigurationKeys.NON_NULL_CHECK_METHOD);
+		if (checkMethod != null) {
+			// same message format as Objects.requireNonNull
+			JCLiteral message = maker.Literal(NullCheckExceptionType.JDK.toExceptionMessage(varName.toString(), customMessage));
+			return maker.Exec(maker.Apply(List.<JCExpression>nil(), chainDots(source, checkMethod.split("\\.")), List.of(maker.Ident(varName), message)));
+		}
+
 		NullCheckExceptionType exceptionType = source.getAst().readConfiguration(ConfigurationKeys.NON_NULL_EXCEPTION_TYPE);
 		if (exceptionType == null) exceptionType = NullCheckExceptionType.NULL_POINTER_EXCEPTION;
 

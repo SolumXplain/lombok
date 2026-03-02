@@ -1,4 +1,5 @@
 //version 9:
+// CONF: lombok.nonNull.checkMethod = java.util.Objects.requireNonNull
 import java.lang.annotation.*;
 
 @lombok.RequiredArgsConstructor
