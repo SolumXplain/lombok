@@ -146,8 +146,24 @@ public class JavacHandlerUtil {
 	 * (i.e. have NullMarked be the default but allow a custom annotation to trigger null checks at
 	 * system boundaries only).
 	 */
+	private static boolean hasSkipNullCheckAnnotation(JavacNode node) {
+		java.util.List<TypeName> skipAnnotations = node.getAst().readConfiguration(ConfigurationKeys.NON_NULL_SKIP_ANNOTATIONS);
+		if (skipAnnotations == null || skipAnnotations.isEmpty()) return false;
+		TypeResolver resolver = node.getImportListAsTypeResolver();
+		for (JavacNode child : node.down()) {
+			if (child.getKind() == Kind.ANNOTATION) {
+				JCAnnotation annotation = (JCAnnotation) child.get();
+				String annotationTypeName = getTypeName(annotation.annotationType);
+				for (TypeName skipAnnotation : skipAnnotations) {
+					if (skipAnnotation != null && resolver.typeMatches(node, skipAnnotation.getName(), annotationTypeName)) return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	static boolean isJSpecifyNonNull(boolean isNullMarked, JavacNode node) {
-		return isNullMarked && !hasNullableAnnotations(node);
+		return isNullMarked && !hasNullableAnnotations(node) && !hasSkipNullCheckAnnotation(node);
 	}
 
 	private static class MarkingScanner extends TreeScanner {

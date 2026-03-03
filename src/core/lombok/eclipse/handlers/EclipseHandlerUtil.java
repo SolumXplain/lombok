@@ -814,6 +814,19 @@ public class EclipseHandlerUtil {
 		return typeNode;
 	}
 
+	private static boolean hasSkipNullCheckAnnotation(EclipseNode node) {
+		List<TypeName> skipAnnotations = node.getAst().readConfiguration(ConfigurationKeys.NON_NULL_SKIP_ANNOTATIONS);
+		if (skipAnnotations == null || skipAnnotations.isEmpty()) return false;
+		for (EclipseNode child : node.down()) {
+			if (child.getKind() != Kind.ANNOTATION) continue;
+			Annotation annotation = (Annotation) child.get();
+			for (TypeName skipAnnotation : skipAnnotations) {
+				if (skipAnnotation != null && typeMatches(skipAnnotation.getName(), node, annotation.type)) return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Return true if the specified field or parameter node is determined as non-null according
 	 * to JSpecify rules.
@@ -824,7 +837,7 @@ public class EclipseHandlerUtil {
 	 * system boundaries only).
 	 */
 	public static boolean isJSpecifyNonNull(boolean isNullMarked, EclipseNode node) {
-		return isNullMarked && !hasNullableAnnotations(node);
+		return isNullMarked && !hasNullableAnnotations(node) && !hasSkipNullCheckAnnotation(node);
 	}
 
 	private static final Annotation[] EMPTY_ANNOTATIONS_ARRAY = new Annotation[0];

@@ -6,6 +6,8 @@ class NullMarkedPlain {
 	String s;
 	@org.jspecify.annotations.Nullable
 	Object o;
+	@com.fasterxml.jackson.annotation.JsonProperty("v")
+	String v;
 	@java.lang.SuppressWarnings("all")
 	@lombok.Generated
 	public NullMarkedPlain() {
@@ -28,6 +30,11 @@ class NullMarkedPlain {
 	}
 	@java.lang.SuppressWarnings("all")
 	@lombok.Generated
+	public String getV() {
+		return this.v;
+	}
+	@java.lang.SuppressWarnings("all")
+	@lombok.Generated
 	public void setI(final int i) {
 		this.i = i;
 	}
@@ -41,5 +48,10 @@ class NullMarkedPlain {
 	@lombok.Generated
 	public void setO(@org.jspecify.annotations.Nullable final Object o) {
 		this.o = o;
+	}
+	@java.lang.SuppressWarnings("all")
+	@lombok.Generated
+	public void setV(final String v) {
+		this.v = v;
 	}
 }

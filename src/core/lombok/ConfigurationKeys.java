@@ -389,6 +389,13 @@ public class ConfigurationKeys {
 	 */
 	public static final ConfigurationKey<String> NON_NULL_CHECK_METHOD = new ConfigurationKey<String>("lombok.nonNull.checkMethod", "The method to call to check for nullness (Default: none).") {};
 	/**
+	 * lombok configuration: {@code lombok.nonNull.skipAnnotations} += &lt;TypeName: fully-qualified annotation class name&gt;.
+	 *
+	 * Annotations in this list, when present on a field, prevent lombok from generating null checks for that field in
+	 * constructors and setters, even when the class is annotated with {@code @NullMarked}.
+	 */
+	public static final ConfigurationKey<List<TypeName>> NON_NULL_SKIP_ANNOTATIONS = new ConfigurationKey<List<TypeName>>("lombok.nonNull.skipAnnotations", "Do not generate null checks for fields annotated with these annotations (even in @NullMarked classes).") {};
+	/**
 	 * lombok configuration: {@code lombok.nonNull.flagUsage} = {@code WARNING} | {@code ERROR}.
 	 *
 	 * If set, <em>any</em> usage of {@code @NonNull} results in a warning / error.

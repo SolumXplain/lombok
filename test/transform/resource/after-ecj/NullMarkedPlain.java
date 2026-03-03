@@ -4,6 +4,7 @@ import java.lang.annotation.*;
   int i;
   String s;
   @org.jspecify.annotations.Nullable Object o;
+  @com.fasterxml.jackson.annotation.JsonProperty("v") String v;
   public @java.lang.SuppressWarnings("all") @lombok.Generated NullMarkedPlain() {
     super();
   }
@@ -28,5 +29,11 @@ import java.lang.annotation.*;
   }
   public @java.lang.SuppressWarnings("all") @lombok.Generated void setO(final @org.jspecify.annotations.Nullable Object o) {
     this.o = o;
+  }
+  public @java.lang.SuppressWarnings("all") @lombok.Generated String getV() {
+    return this.v;
+  }
+  public @java.lang.SuppressWarnings("all") @lombok.Generated void setV(final String v) {
+    this.v = v;
   }
 }
