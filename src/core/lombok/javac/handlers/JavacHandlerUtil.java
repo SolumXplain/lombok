@@ -341,6 +341,8 @@ public class JavacHandlerUtil {
 	 * @param node A Lombok AST node representing an annotation in source code.
 	 */
 	public static boolean annotationTypeMatches(String type, JavacNode node) {
+		if (node.getKind() == Kind.TYPE_USE && !node.down().isEmpty())
+			node = node.down().get(0);
 		if (node.getKind() != Kind.ANNOTATION) return false;
 		return typeMatches(type, node, ((JCAnnotation) node.get()).annotationType);
 	}
