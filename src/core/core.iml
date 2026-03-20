@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="delombok" />
+    <orderEntry type="module" module-name="eclipseAgent" />
+    <orderEntry type="library" name="eclipse-oxygen libs" level="project" />
+    <orderEntry type="module" module-name="launch" />
+    <orderEntry type="module" module-name="utils" />
+    <orderEntry type="library" name="ecj11 libs" level="project" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="spiProcessor" />
+  </component>
+</module>

@@ -1,0 +1,53 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="test.javac25" type="JUnit" factoryName="JUnit">
+    <extension name="coverage" enabled="false" sample_coverage="true" runner="idea" />
+    <option name="MAIN_CLASS_NAME" value="lombok.TestJavac" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <!--
+      No special VM args needed for javac25. Compare with test.javac6/8 which need:
+        -Xbootclasspath/a:lib/openjdk6_rt.jar
+        -Ddelombok.bootclasspath=lib/openjdk6_rt.jar
+        -Dsun.boot.class.path=lib/openjdk6_rt.jar
+        -\-limit-modules java.base,jdk.unsupported
+      None of these apply to a modern Java 25 JVM.
+    -->
+    <option name="VM_PARAMETERS" value="" />
+    <option name="WORKING_DIRECTORY" value="$MODULE_WORKING_DIR$" />
+    <!--
+      Temurin 25.0.2 found at ~/.jdks/temurin-25.0.2 (also the default system JVM).
+      IntelliJ detects ~/.jdks/ automatically, so this SDK is likely already registered.
+    -->
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="ALTERNATIVE_JRE_PATH" value="/home/neale/.jdks/temurin-25.0.2" />
+    <!--
+      Classpath = lombok module classpath, which resolves to:
+        Compile scope  : build libs, eclipse-oxygen libs, eclipse-202006 libs,
+                         ecj8 libs, ecj11 libs, javac6 libs, javac8 libs,
+                         stripe libs, mapstruct libs, buildtools libs,
+                         openjdk6_rt.jar, openjdk8_rt.jar, rtstubs18.jar,
+                         + IntelliJ production output (out/production/lombok/)
+        Test scope     : test libs
+                         + IntelliJ test output    (out/test/lombok/)
+                           covers build/tests and build/teststubs
+
+      The ant packing.basedirs.path entries are covered by IntelliJ compilation:
+        build/lombok-main      -> out/production/lombok/
+        build/lombok-utils     -> out/production/lombok/
+        build/lombok-utils6    -> out/production/lombok/
+        build/lombok-main8     -> out/production/lombok/
+        build/lombok-transplants (transplant bytecode) -> out/production/lombok/
+        build/lombok-deps      -> stripe libs (lib/stripe/*.jar)
+
+      If you prefer to test against the ant-built artefacts instead of
+      IntelliJ-compiled classes, add the build/* directories manually in
+      Run | Edit Configurations | Modify classpath (+ button).
+    -->
+    <module name="lombok" />
+    <envs />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
+

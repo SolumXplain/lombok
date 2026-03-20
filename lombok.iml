@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/experimental/src/" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test/transform/src/" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test/core/src/" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test/configuration/src/" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test/stubs/" isTestSource="true" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="stubs" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/openjdk6_rt.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/openjdk6_rt.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="build libs" level="project" />
+    <orderEntry type="library" name="test libs" level="project" />
+    <orderEntry type="library" name="eclipse-oxygen libs" level="project" />
+    <orderEntry type="library" name="eclipse-202006 libs" level="project" />
+    <orderEntry type="library" name="ecj8 libs" level="project" />
+    <orderEntry type="library" name="ecj11 libs" level="project" />
+    <orderEntry type="library" name="javac6 libs" level="project" />
+    <orderEntry type="library" name="javac8 libs" level="project" />
+    <orderEntry type="library" name="stripe libs" level="project" />
+    <orderEntry type="library" name="mapstruct libs" level="project" />
+    <orderEntry type="library" name="buildtools libs" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/rtstubs18.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="spiProcessor" />
+    <orderEntry type="module" module-name="utils" />
+    <orderEntry type="module" module-name="eclipseAgent" />
+    <orderEntry type="module" module-name="core" scope="TEST" />
+    <orderEntry type="module" module-name="delombok" scope="TEST" />
+  </component>
+</module>

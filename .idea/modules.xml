@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/src/core/core.iml" filepath="$PROJECT_DIR$/src/core/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/core8/core8.iml" filepath="$PROJECT_DIR$/src/core8/core8.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/delombok/delombok.iml" filepath="$PROJECT_DIR$/src/delombok/delombok.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/eclipseAgent/eclipseAgent.iml" filepath="$PROJECT_DIR$/src/eclipseAgent/eclipseAgent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/launch/launch.iml" filepath="$PROJECT_DIR$/src/launch/launch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lombok.iml" filepath="$PROJECT_DIR$/lombok.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/spiProcessor/spiProcessor.iml" filepath="$PROJECT_DIR$/src/spiProcessor/spiProcessor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/stubs/stubs.iml" filepath="$PROJECT_DIR$/src/stubs/stubs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/stubsstubs/stubsstubs.iml" filepath="$PROJECT_DIR$/src/stubsstubs/stubsstubs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/utils/utils.iml" filepath="$PROJECT_DIR$/src/utils/utils.iml" />
+    </modules>
+  </component>
+</project>

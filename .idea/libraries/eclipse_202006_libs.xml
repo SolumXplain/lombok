@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="libraryTable">
+  <library name="eclipse-202006 libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.jdt-org.eclipse.jdt.core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.jdt-org.eclipse.jdt.ui.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.core.contenttype.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.core.jobs.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.core.resources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.core.runtime.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.equinox.app.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.equinox.common.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.equinox.preferences.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.equinox.registry.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.osgi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/eclipse-202006/org.eclipse.platform-org.eclipse.text.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+    </SOURCES>
+  </library>
+</component>
+
