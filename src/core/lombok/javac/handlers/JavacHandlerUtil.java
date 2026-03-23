@@ -278,7 +278,9 @@ public class JavacHandlerUtil {
 		case TYPE:
 		case METHOD:
 			for (JavacNode child : node.down()) {
-				if (annotationTypeMatches(type, child)) {
+				if (annotationTypeMatches(type, child)) { // ensure we have the annotation on the right bit
+					// This should return false: private @org.jspecify.annotations.Nullable String[] arrayOfNullableStrings;
+					// It gives us node.down() = [NODE ANNOTATION (class com.sun.tools.javac.tree.JCTree$JCAnnotation) @org.jspecify.annotations.Nullable, NODE TYPE_USE (class com.sun.tools.javac.tree.JCTree$JCArrayTypeTree) String[]] here
 					if (delete) deleteAnnotationIfNeccessary(child, type);
 					return true;
 				}
