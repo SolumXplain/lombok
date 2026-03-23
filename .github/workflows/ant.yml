@@ -43,8 +43,8 @@ jobs:
     env:
       EA_JDK: 27
     strategy:
-      matrix: 
-        jdk: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+      matrix:
+        jdk: [11, 17, 21, 22, 23, 24, 25]
         goal: [javacCurrent]
       fail-fast: false
 
