@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2009-2025 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,10 +32,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.lang.model.type.NoType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeVisitor;
 
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Source;
@@ -71,12 +67,12 @@ public class Javac {
 	private Javac() {
 		// prevent instantiation
 	}
-	
+
 	private static final Pattern VERSION_PARSER = Pattern.compile("^(\\d{1,6})\\.?(\\d{1,6})?.*$");
 	private static final Pattern SOURCE_PARSER = Pattern.compile("^JDK(\\d{1,6})_?(\\d{1,6})?.*$");
-	
+
 	private static final AtomicInteger compilerVersion = new AtomicInteger(-1);
-	
+
 	/* This section includes flags that would ordinarily be in com.sun.tools.javac.code.Flags, but which are 'too new' (we don't compile against older versions of javac for compatibility). */
 	public static final long RECORD = 1L << 61; // ClassSymbols, MethodSymbols, VarSymbols (Marks types as being records, as well as the 'fields' in the compact declaration, and the canonical constructor)
 	public static final long COMPACT_RECORD_CONSTRUCTOR = 1L << 51; // MethodSymbols (the 'implicit' many-args constructor that records have)
@@ -85,14 +81,14 @@ public class Javac {
 	public static final long SEALED = 1L << 62 | 1L << 48; // ClassSymbols (Flag to indicate sealed class/interface declaration) - from the introduction of sealed until ~jdk23, this was 62. In jdk24, it's 48. Ugh.
 	public static final long NON_SEALED = 1L << 63; // ClassSymbols (Flag to indicate that the class/interface was declared with the non-sealed modifier)
 	public static final long IMPLICIT_CLASS = 1L << 19; // ClassSymbols (Flag to indicate that the class/interface wasn't actually written out; it is an implicitly declared top-level class). Introduced in JDK25, JEP512.
-	
+
 	/**
 	 * Returns the version of this java compiler, i.e. the JDK that it shipped in. For example, for javac v1.7, this returns {@code 7}.
 	 */
 	public static int getJavaCompilerVersion() {
 		int cv = compilerVersion.get();
 		if (cv != -1) return cv;
-		
+
 		/* Main algorithm: Use JavaCompiler's intended method to do this */ {
 			Matcher m = VERSION_PARSER.matcher(JavaCompiler.version());
 			if (m.matches()) {
@@ -104,7 +100,7 @@ public class Javac {
 				if (major >= 9) return setVersion(major);
 			}
 		}
-		
+
 		/* Fallback algorithm one: Check Source's values. Lets hope oracle never releases a javac that recognizes future versions for -source */ {
 			String name = Source.values()[Source.values().length - 1].name();
 			Matcher m = SOURCE_PARSER.matcher(name);
@@ -119,14 +115,14 @@ public class Javac {
 		}
 		return setVersion(6);
 	}
-	
+
 	private static int setVersion(int version) {
 		compilerVersion.set(version);
 		return version;
 	}
-	
+
 	private static final Class<?> DOCCOMMENTTABLE_CLASS;
-	
+
 	static {
 		Class<?> c = null;
 		try {
@@ -134,11 +130,11 @@ public class Javac {
 		} catch (Throwable ignore) {}
 		DOCCOMMENTTABLE_CLASS = c;
 	}
-	
+
 	public static boolean instanceOfDocCommentTable(Object o) {
 		return DOCCOMMENTTABLE_CLASS != null && DOCCOMMENTTABLE_CLASS.isInstance(o);
 	}
-	
+
 	/**
 	 * Checks if the given expression (that really ought to refer to a type
 	 * expression) represents a primitive type.
@@ -146,11 +142,11 @@ public class Javac {
 	public static boolean isPrimitive(JCExpression ref) {
 		return JavaIdentifiers.isPrimitive(ref.toString());
 	}
-	
+
 	/**
 	 * Turns an expression into a guessed intended literal. Only works for
 	 * literals, as you can imagine.
-	 * 
+	 *
 	 * Will for example turn a TrueLiteral into 'Boolean.valueOf(true)'.
 	 */
 	public static Object calculateGuess(JCExpression expr) {
@@ -161,7 +157,7 @@ public class Javac {
 			}
 			return lit.value;
 		}
-		
+
 		if (expr instanceof JCIdent || expr instanceof JCFieldAccess) {
 			String x = expr.toString();
 			if (x.endsWith(".class")) return new ClassLiteral(x.substring(0, x.length() - 6));
@@ -169,10 +165,10 @@ public class Javac {
 			if (idx > -1) x = x.substring(idx + 1);
 			return new FieldSelect(x);
 		}
-		
+
 		return null;
 	}
-	
+
 	public static final TypeTag CTC_BOOLEAN = typeTag("BOOLEAN");
 	public static final TypeTag CTC_INT = typeTag("INT");
 	public static final TypeTag CTC_DOUBLE = typeTag("DOUBLE");
@@ -186,10 +182,10 @@ public class Javac {
 	public static final TypeTag CTC_BOT = typeTag("BOT");
 	public static final TypeTag CTC_ERROR = typeTag("ERROR");
 	public static final TypeTag CTC_UNKNOWN = typeTagPermissive("UNKNOWN"); // UNKNOWN has been removed in JDK24, hence, we need to look it up permissively (just make it `null` if it does not exist).
-	
+
 	public static final TypeTag CTC_UNDETVAR = typeTag("UNDETVAR");
 	public static final TypeTag CTC_CLASS = typeTag("CLASS");
-	
+
 	public static final TreeTag CTC_NOT_EQUAL = treeTag("NE");
 	public static final TreeTag CTC_LESS_THAN = treeTag("LT");
 	public static final TreeTag CTC_GREATER_THAN = treeTag("GT");
@@ -210,12 +206,12 @@ public class Javac {
 	public static final TreeTag CTC_PREDEC = treeTag("PREDEC");
 	public static final TreeTag CTC_POSTINC = treeTag("POSTINC");
 	public static final TreeTag CTC_POSTDEC = treeTag("POSTDEC");
-	
+
 	private static final Method getExtendsClause, getEndPosition, storeEnd;
-	
+
 	static {
 		getExtendsClause = getMethod(JCClassDecl.class, "getExtendsClause", new Class<?>[0]);
-		
+
 		if (getJavaCompilerVersion() < 8) {
 			getEndPosition = getMethod(DiagnosticPosition.class, "getEndPosition", java.util.Map.class);
 			storeEnd = getMethod(java.util.Map.class, "put", Object.class, Object.class);
@@ -245,7 +241,7 @@ public class Javac {
 		Permit.setAccessible(getEndPosition);
 		Permit.setAccessible(storeEnd);
 	}
-	
+
 	private static Method getMethod(Class<?> clazz, String name, Class<?>... paramTypes) {
 		try {
 			return Permit.getMethod(clazz, name, paramTypes);
@@ -253,7 +249,7 @@ public class Javac {
 			throw sneakyThrow(e);
 		}
 	}
-	
+
 	private static Method getMethod(Class<?> clazz, String name, String... paramTypes) {
 		try {
 			Class<?>[] c = new Class[paramTypes.length];
@@ -265,7 +261,7 @@ public class Javac {
 			throw sneakyThrow(e);
 		}
 	}
-	
+
 	/**
 	 * In some versions, the field's type is {@code JCTree}, in others it is {@code JCExpression}, which at the JVM level are not the same.
 	 */
@@ -278,12 +274,12 @@ public class Javac {
 			throw sneakyThrow(e.getCause());
 		}
 	}
-	
+
 	/**
 	 * In some versions, the field's type is {@code JCTree}, in others it is {@code JCFieldAccess}, which at the JVM level are not the same.
 	 */
 	private static final Field JCIMPORT_QUALID = Permit.permissiveGetField(JCImport.class, "qualid");
-	
+
 	public static JCTree getQualid(JCImport tree) {
 		try {
 			return (JCTree) JCIMPORT_QUALID.get(tree);
@@ -291,7 +287,7 @@ public class Javac {
 			throw sneakyThrow(e.getCause());
 		}
 	}
-	
+
 	public static Object getDocComments(JCCompilationUnit cu) {
 		try {
 			return JCCOMPILATIONUNIT_DOCCOMMENTS.get(cu);
@@ -299,17 +295,17 @@ public class Javac {
 			throw sneakyThrow(e);
 		}
 	}
-	
+
 	public static String getDocComment(JCCompilationUnit cu, JCTree node) {
 		Object dc = getDocComments(cu);
 		if (dc instanceof Map) return (String) ((Map<?, ?>) dc).get(node);
 		if (instanceOfDocCommentTable(dc)) return JavadocOps_8.getJavadoc(dc, node);
 		return null;
 	}
-	
+
 	/**
 	 * Checks if the javadoc comment associated with {@code tree} has a position set.
-	 * 
+	 *
 	 * Returns true if there is no javadoc comment on the node, or it has position (position isn't -1).
 	 */
 	public static boolean validateDocComment(JCCompilationUnit cu, JCTree tree) {
@@ -317,7 +313,7 @@ public class Javac {
 		if (!instanceOfDocCommentTable(dc)) return true;
 		return JavadocOps_8.validateJavadoc(dc, tree);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static void setDocComment(JCCompilationUnit cu, JCTree node, String javadoc) {
 		if (javadoc == null) return;
@@ -326,17 +322,17 @@ public class Javac {
 			((Map<JCTree, String>) dc).put(node, javadoc);
 			return;
 		}
-		
+
 		if (instanceOfDocCommentTable(dc)) {
 			JavadocOps_8.setJavadoc(dc, node, javadoc);
 			return;
 		}
 	}
-	
+
 	public static Object getCommentStyle() {
 		return JavadocOps_8.COMMENT_STYLE;
 	}
-	
+
 	private static class JavadocOps_8 {
 		static String getJavadoc(Object dc, JCTree node) {
 			DocCommentTable dct = (DocCommentTable) dc;
@@ -344,19 +340,19 @@ public class Javac {
 			if (javadoc == null) return null;
 			return javadoc.getText();
 		}
-		
+
 		public static boolean validateJavadoc(Object dc, JCTree node) {
 			DocCommentTable dct = (DocCommentTable) dc;
 			Comment javadoc = dct.getComment(node);
 			return javadoc == null || javadoc.getText() == null || (javadoc.getSourcePos(0) >= 0 && hasParseableDocComment(dct, node));
 		}
-		
+
 		static void setJavadoc(Object dc, JCTree node, String javadoc) {
 			DocCommentTable dct = (DocCommentTable) dc;
 			Comment newCmt = createJavadocComment(javadoc, node);
 			dct.putComment(node, newCmt);
 		}
-		
+
 		private static final CommentStyle COMMENT_STYLE = getCommentStyle();
 		private static CommentStyle getCommentStyle() {
 			try {
@@ -365,41 +361,33 @@ public class Javac {
 				return CommentStyle.valueOf("JAVADOC_BLOCK");
 			}
 		}
-		
+
 		private static boolean hasParseableDocComment(Object dc, JCTree node) {
 			DocCommentTable dct = (DocCommentTable) dc;
 			return Permit.invokeSneaky(Permit.permissiveGetMethod(DocCommentTable.class, "getCommentTree", JCTree.class), dct, node) != null;
 		}
-		
+
 		private static Comment createJavadocComment(final String text, final JCTree field) {
 			return new Comment() {
 				@Override public String getText() {
 					return text;
 				}
-				
-				@Override public Comment stripIndent() {
-					return this;
-				}
-				
+
 				@Override public int getSourcePos(int index) {
 					return field == null ? -1 : field.getStartPosition();
 				}
-				
+
 				@Override public CommentStyle getStyle() {
 					return COMMENT_STYLE;
 				}
-				
+
 				@Override public boolean isDeprecated() {
 					return text.contains("@deprecated") && field instanceof JCVariableDecl && isFieldDeprecated(field);
-				}
-				
-				@Override public DiagnosticPosition getPos() {
-					return field;
 				}
 			};
 		}
 	}
-	
+
 	public static boolean isFieldDeprecated(JCTree field) {
 		if (!(field instanceof JCVariableDecl)) return false;
 		JCVariableDecl fieldNode = (JCVariableDecl) field;
@@ -410,7 +398,7 @@ public class Javac {
 		}
 		return false;
 	}
-	
+
 	public static void initDocComments(JCCompilationUnit cu) {
 		try {
 			JCCOMPILATIONUNIT_DOCCOMMENTS.set(cu, new HashMap<Object, String>());
@@ -420,7 +408,7 @@ public class Javac {
 			throw sneakyThrow(e);
 		}
 	}
-	
+
 	public static int getEndPosition(DiagnosticPosition pos, JCCompilationUnit top) {
 		try {
 			Object endPositions = JCCOMPILATIONUNIT_ENDPOSITIONS.get(top);
@@ -445,7 +433,7 @@ public class Javac {
 	}
 
 	private static final Class<?> JC_VOID_TYPE, JC_NO_TYPE;
-	
+
 	static {
 		Class<?> c = null;
 		try {
@@ -458,9 +446,9 @@ public class Javac {
 		} catch (Throwable ignore) {}
 		JC_NO_TYPE = c;
 	}
-	
+
 	private static final Field symtabVoidType = getFieldIfExists(Symtab.class, "voidType");
-	
+
 	private static Field getFieldIfExists(Class<?> c, String fieldName) {
 		try {
 			return Permit.getField(c, "voidType");
@@ -468,51 +456,29 @@ public class Javac {
 			return null;
 		}
 	}
-	
+
 	public static Type createVoidType(Symtab symbolTable, TypeTag tag) {
 		if (symtabVoidType != null) try {
 			return (Type) symtabVoidType.get(symbolTable);
 		} catch (IllegalAccessException ignore) {}
-		
-		if (Javac.getJavaCompilerVersion() < 8) {
-			return new JCNoType(((Integer) tag.value).intValue());
-		} else {
-			try {
-				if (CTC_VOID.equals(tag)) {
-					return (Type) JC_VOID_TYPE.getConstructor().newInstance();
-				} else {
-					return (Type) JC_NO_TYPE.getConstructor().newInstance();
-				}
-			} catch (InvocationTargetException e) {
-				throw sneakyThrow(e.getCause());
-			} catch (NoSuchMethodException e) {
-				throw sneakyThrow(e);
-			} catch (IllegalAccessException e) {
-				throw sneakyThrow(e);
-			} catch (InstantiationException e) {
-				throw sneakyThrow(e);
+
+		try {
+			if (CTC_VOID.equals(tag)) {
+				return (Type) JC_VOID_TYPE.getConstructor().newInstance();
+			} else {
+				return (Type) JC_NO_TYPE.getConstructor().newInstance();
 			}
+		} catch (InvocationTargetException e) {
+			throw sneakyThrow(e.getCause());
+		} catch (NoSuchMethodException e) {
+			throw sneakyThrow(e);
+		} catch (IllegalAccessException e) {
+			throw sneakyThrow(e);
+		} catch (InstantiationException e) {
+			throw sneakyThrow(e);
 		}
 	}
-	
-	private static class JCNoType extends Type implements NoType {
-		public JCNoType(int tag) {
-			super(tag, null);
-		}
-		
-		@Override
-		public TypeKind getKind() {
-			if (tag == ((Integer) CTC_VOID.value).intValue()) return TypeKind.VOID;
-			if (tag == ((Integer) CTC_NONE.value).intValue()) return TypeKind.NONE;
-			throw new AssertionError("Unexpected tag: " + tag);
-		}
-		
-		@Override
-		public <R, P> R accept(TypeVisitor<R, P> v, P p) {
-			return v.visitNoType(this, p);
-		}
-	}
-	
+
 	private static final Field JCCOMPILATIONUNIT_ENDPOSITIONS, JCCOMPILATIONUNIT_DOCCOMMENTS;
 	static {
 		Field f = null;
@@ -520,20 +486,20 @@ public class Javac {
 			f = Permit.getField(JCCompilationUnit.class, "endPositions");
 		} catch (NoSuchFieldException e) {}
 		JCCOMPILATIONUNIT_ENDPOSITIONS = f;
-		
+
 		f = null;
 		try {
 			f = Permit.getField(JCCompilationUnit.class, "docComments");
 		} catch (NoSuchFieldException e) {}
 		JCCOMPILATIONUNIT_DOCCOMMENTS = f;
 	}
-	
+
 	static RuntimeException sneakyThrow(Throwable t) {
 		if (t == null) throw new NullPointerException("t");
 		Javac.<RuntimeException>sneakyThrow0(t);
 		return null;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private static <T extends Throwable> void sneakyThrow0(Throwable t) throws T {
 		throw (T)t;
