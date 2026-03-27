@@ -128,12 +128,12 @@ This buildfile is part of projectlombok.org. It takes care of compiling and buil
 			<classpath refid="cp.javac6" />
 			<classpath refid="cp.ecj11" />
 		</ivy:compile>
-		<ivy:compile destdir="build/lombok-utils6" source="1.6" target="1.6" ecj="true">
+		<ivy:compile destdir="build/lombok-utils6" source="1.8" target="1.8" ecj="true">
 			<bootclasspath location="build/stubs" />
-			<bootclasspath path="${jdk6-rt.loc}" />
+			<bootclasspath path="${jdk8-rt.loc}" />
 			<src path="src/utils" />
 			<include name="lombok/javac/**" />
-			<classpath refid="cp.javac6" />
+			<classpath refid="cp.javac8" />
 			<classpath path="build/lombok-utils:build/lombok-utils6" />
 		</ivy:compile>
 
