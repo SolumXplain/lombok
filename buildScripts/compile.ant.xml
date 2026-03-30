@@ -28,7 +28,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and buil
 
 	<!-- compiles just 'version.java' and runs the produced class file, setting up the various version properties -->
 	<target name="version" depends="ipp.setup, deps.jdk-runtime, -setup.build" description="Shows the version number" unless="lombok.version">
-		<ivy:compile destdir="build/lombok-version" source="1.5" target="1.5" ecj="true" nowarn="true">
+		<ivy:compile destdir="build/lombok-version" source="1.8" target="1.8" ecj="true" nowarn="true">
 			<bootclasspath path="${jdk6-rt.loc}" />
 			<src path="src/core" />
 			<include name="lombok/core/Version.java" />
@@ -107,11 +107,11 @@ This buildfile is part of projectlombok.org. It takes care of compiling and buil
 			Instead of depending on conflicting versions, we write stub files; just enough for compilation to succeed.
 
 			However, the stubs themselves also have a ton of dependencies; to avoid _that_, we have stubs for stubs, too! -->
-		<ivy:compile destdir="build/stubsstubs" source="1.5" target="1.5" ecj="true">
+		<ivy:compile destdir="build/stubsstubs" source="1.8" target="1.8" ecj="true">
 			<bootclasspath path="${jdk6-rt.loc}" />
 			<src path="src/stubsstubs" />
 		</ivy:compile>
-		<ivy:compile destdir="build/stubs" source="1.5" target="1.5" ecj="true">
+		<ivy:compile destdir="build/stubs" source="1.8" target="1.8" ecj="true">
 			<bootclasspath path="${jdk6-rt.loc}" />
 			<src path="src/stubs" />
 			<src path="src/javac-only-stubs" />
@@ -119,7 +119,7 @@ This buildfile is part of projectlombok.org. It takes care of compiling and buil
 			<classpath location="build/stubs" />
 		</ivy:compile>
 
-		<ivy:compile destdir="build/lombok-utils" source="1.5" target="1.5" ecj="true">
+		<ivy:compile destdir="build/lombok-utils" source="1.8" target="1.8" ecj="true">
 			<bootclasspath location="build/stubs" />
 			<bootclasspath path="${jdk6-rt.loc}" />
 			<src path="src/utils" />
