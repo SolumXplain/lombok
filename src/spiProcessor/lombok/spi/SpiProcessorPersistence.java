@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2021 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -47,14 +47,14 @@ class SpiProcessorPersistence {
 	private final String path;
 	final Filer filer;
 	private final Messager logger;
-	
+
 	SpiProcessorPersistence(String name, Filer filer, Messager logger) {
 		this.name = name;
 		this.logger = logger;
 		this.path = SpiProcessor.getRootPathOfServiceFiles();
 		this.filer = filer;
 	}
-	
+
 	static CharSequence readFilerResource(FileObject resource, Messager logger, String pathName) {
 		try {
 			// Eclipse can't handle getCharContent, so we must use a reader...
@@ -85,7 +85,7 @@ class SpiProcessorPersistence {
 			}
 		}
 	}
-	
+
 	private static CharSequence tryWithReader(FileObject resource) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		Reader raw = resource.openReader(true);
@@ -97,7 +97,7 @@ class SpiProcessorPersistence {
 			if (raw != null) raw.close();
 		}
 	}
-	
+
 	Collection<String> tryFind() {
 		File dir = determineOutputLocation();
 		if (dir == null || !dir.isDirectory()) return Collections.emptyList();
@@ -108,11 +108,11 @@ class SpiProcessorPersistence {
 		}
 		return out;
 	}
-	
+
 	private File determineOutputLocation() {
 		FileObject resource;
 		try {
-			resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "META-INF", "locator.tmp");
+			resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", "META-INF/locator.tmp");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			// Could happen
@@ -123,21 +123,21 @@ class SpiProcessorPersistence {
 			return null;
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
-			// Happens when the path is invalid. For instance absolute or relative to a path 
+			// Happens when the path is invalid. For instance absolute or relative to a path
 			// not part of the class output folder.
 			//
-			// Due to a bug in javac for Linux, this also occurs when no output path is specified 
+			// Due to a bug in javac for Linux, this also occurs when no output path is specified
 			// for javac using the -d parameter.
 			// See http://forums.sun.com/thread.jspa?threadID=5240999&tstart=45
 			// and http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6647996
-			
+
 			return null;
 		}
-		
+
 		URI uri = resource.toUri();
 		return new File(new File(uri).getParentFile(), "services");
 	}
-	
+
 	void write(String serviceName, String value) throws IOException {
 		FileObject output = filer.createResource(StandardLocation.CLASS_OUTPUT, "", path + serviceName);
 		Writer writer = output.openWriter();
