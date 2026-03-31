@@ -1,0 +1,199 @@
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+group = 'org.projectlombok'
+version = '1.18.45'
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Local library helpers – JARs already fetched by Ant/Ivy into lib/
+// ──────────────────────────────────────────────────────────────────────────────
+
+def localJars(String dir) { fileTree(dir: dir, include: '*.jar') }
+
+def stripeJars  = localJars('lib/stripe')         // lombok.patcher, cmdreader
+def eclipseJars = localJars('lib/eclipse-oxygen') // Eclipse JDT APIs
+def ecj11Jars   = localJars('lib/ecj11')          // ECJ compiler API
+def antJars     = localJars('lib/build').filter { it.name.startsWith('org.apache.ant') }
+def testLibJars = localJars('lib/test')
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Source sets
+// ──────────────────────────────────────────────────────────────────────────────
+
+// SPI annotation processor – compiled first, packed into its own JAR and
+// then used as an annotation processor when compiling the main sources so that
+// @Provides annotations generate META-INF/services files automatically.
+sourceSets {
+    spiProcessor {
+        java.srcDirs 'src/spiProcessor'
+    }
+
+    // All Java-based sub-projects compiled together.
+    // module-info.java is excluded – it requires --module-source-path treatment
+    // and is not needed for development / testing.
+    main {
+        java.srcDirs(
+            'src/core',
+            'src/core8',
+            'src/launch',
+            'src/delombok',
+            'src/installer',
+            'src/eclipseAgent',
+            'src/utils',
+        )
+        java.exclude '**/module-info.java'
+        // Include resource files (e.g., singulars.txt) from source directories
+        resources.srcDirs(
+            'src/core',
+            'src/core8',
+            'src/launch',
+            'src/delombok',
+            'src/installer',
+            'src/eclipseAgent',
+            'src/utils',
+        )
+        resources.include '**/*.txt', '**/*.properties', '**/*.xml'
+        resources.exclude '**/*.java'
+    }
+
+    test {
+        java.srcDirs(
+            'test/core/src',
+            'test/transform/src',
+            'test/bytecode/src',
+            'test/configuration/src',
+            'test/stubs',      // stub annotation types referenced by the tests
+        )
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SPI Processor JAR
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Generate the META-INF/services file that makes the JAR discoverable as an
+// annotation processor (mirrors the <echo> step in compile.ant.xml).
+tasks.register('generateSpiProcessorServices') {
+    def servicesFile = layout.buildDirectory.file(
+        'generated/spi-services/javax.annotation.processing.Processor')
+    outputs.file(servicesFile)
+    doLast {
+        def f = servicesFile.get().asFile
+        f.parentFile.mkdirs()
+        f.text = 'lombok.spi.SpiProcessor'
+    }
+}
+
+tasks.register('spiProcessorJar', Jar) {
+    group = 'build'
+    description = 'Builds the SPI annotation processor JAR used during main compilation'
+    archiveFileName = 'spiProcessor.jar'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    from sourceSets.spiProcessor.output
+    into('META-INF/services') {
+        from tasks.named('generateSpiProcessorServices')
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Dependencies
+// ──────────────────────────────────────────────────────────────────────────────
+
+dependencies {
+    // The spiProcessor source set compiles lombok.spi.{Provides,...} – these
+    // annotation types must be visible on the main compile classpath even though
+    // the spiProcessor JAR itself is wired only as an annotation processor.
+    compileOnly sourceSets.spiProcessor.output
+
+    // Main sources
+    implementation stripeJars   // lombok.patcher, cmdreader (shadow-loader runtime)
+    implementation eclipseJars  // Eclipse JDT APIs (eclipse handlers + installer)
+    implementation ecj11Jars    // ECJ APIs (eclipse-based annotation handlers)
+    implementation antJars      // Ant APIs (DelombokTask ant-task integration)
+
+    // Tests
+    testImplementation testLibJars                 // JUnit, SLF4J, log4j, etc.
+    testImplementation antJars
+    testImplementation stripeJars
+    testImplementation eclipseJars
+    testImplementation ecj11Jars
+    testImplementation sourceSets.main.output
+}
+
+
+// The source code accesses private javac APIs in jdk.compiler.
+// Expose them with --add-exports.
+def javacInternalPackages = [
+    'com.sun.tools.javac.api',
+    'com.sun.tools.javac.code',
+    'com.sun.tools.javac.comp',
+    'com.sun.tools.javac.file',
+    'com.sun.tools.javac.jvm',
+    'com.sun.tools.javac.main',
+    'com.sun.tools.javac.model',
+    'com.sun.tools.javac.parser',
+    'com.sun.tools.javac.processing',
+    'com.sun.tools.javac.tree',
+    'com.sun.tools.javac.util',
+]
+
+def addExportsArgs = javacInternalPackages.collectMany { pkg ->
+    ['--add-exports', "jdk.compiler/${pkg}=ALL-UNNAMED"]
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.warnings = false
+    options.compilerArgs.addAll(addExportsArgs)
+}
+
+// Wire the spiProcessor JAR as the annotation processor for the main compile
+// so that @Provides annotations produce META-INF/services entries.
+// Also add javac8Jar to the test compile classpath so tests can reference
+// javac internal APIs.
+tasks.named('compileJava') {
+    dependsOn tasks.named('spiProcessorJar')
+    options.annotationProcessorPath = files(tasks.named('spiProcessorJar'))
+}
+
+tasks.named('compileTestJava') {
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// JAR manifest (mirrors the Ant dist target)
+// ──────────────────────────────────────────────────────────────────────────────
+
+jar {
+    manifest {
+        attributes(
+            'Premain-Class'         : 'lombok.launch.Agent',
+            'Agent-Class'           : 'lombok.launch.Agent',
+            'Can-Redefine-Classes'  : 'true',
+            'Main-Class'            : 'lombok.launch.Main',
+            'Lombok-Version'        : version,
+            'Automatic-Module-Name' : 'lombok',
+        )
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Test task
+// ──────────────────────────────────────────────────────────────────────────────
+
+test {
+    useJUnit()
+    // At test-execution time lombok runs as a real annotation processor inside
+    // the JVM, so it must access the live jdk.compiler internals.
+    def jvmExports = javacInternalPackages.collectMany { pkg ->
+        ['--add-exports', "jdk.compiler/${pkg}=ALL-UNNAMED"]
+    }
+    jvmArgs jvmExports
+    jvmArgs '--add-opens', 'jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED'
+}
+
