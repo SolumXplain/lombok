@@ -23,8 +23,6 @@ package lombok.javac.handlers;
 
 import static com.sun.tools.javac.code.Flags.GENERATEDCONSTR;
 import static com.sun.tools.javac.code.Flags.GENERATED_MEMBER;
-import static com.sun.tools.javac.code.Flags.SEALED;
-import static com.sun.tools.javac.code.Flags.NON_SEALED;
 import static com.sun.tools.javac.code.Flags.RECORD;
 import static lombok.core.handlers.HandlerUtil.*;
 import static lombok.javac.Javac.*;
@@ -94,6 +92,7 @@ import lombok.AccessLevel;
 import lombok.ConfigurationKeys;
 import lombok.Data;
 import lombok.Getter;
+import lombok.core.AST;
 import lombok.core.AST.Kind;
 import lombok.core.AnnotationValues;
 import lombok.core.AnnotationValues.AnnotationValue;
@@ -696,7 +695,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible getter names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllGetterNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllGetterNames(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllGetterNames(JavacNode field) {
 		return HandlerUtil.toAllGetterNames(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -704,7 +703,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible getter names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllGetterNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllGetterNames(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllGetterNames(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toAllGetterNames(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -713,7 +712,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely getter name for the stated field. (e.g. private boolean foo; to isFoo).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toGetterName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toGetterName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toGetterName(JavacNode field) {
 		return HandlerUtil.toGetterName(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -722,7 +721,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely getter name for the stated field. (e.g. private boolean foo; to isFoo).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toGetterName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toGetterName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toGetterName(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toGetterName(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -730,7 +729,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible setter names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllSetterNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllSetterNames(AST, AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllSetterNames(JavacNode field) {
 		return HandlerUtil.toAllSetterNames(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -738,7 +737,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible setter names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllSetterNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllSetterNames(AST, AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllSetterNames(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toAllSetterNames(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -747,7 +746,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely setter name for the stated field. (e.g. private boolean foo; to setFoo).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toSetterName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toSetterName(AST, AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toSetterName(JavacNode field) {
 		return HandlerUtil.toSetterName(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -756,7 +755,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely setter name for the stated field. (e.g. private boolean foo; to setFoo).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toSetterName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toSetterName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toSetterName(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toSetterName(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -764,7 +763,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible with names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllWithNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllWithNames(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllWithNames(JavacNode field) {
 		return HandlerUtil.toAllWithNames(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -772,7 +771,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible with names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllWithNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllWithNames(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllWithNames(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toAllWithNames(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -780,7 +779,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible withBy names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllWithByNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllWithByNames(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllWithByNames(JavacNode field) {
 		return HandlerUtil.toAllWithByNames(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -788,7 +787,7 @@ public class JavacHandlerUtil {
 
 	/**
 	 * Translates the given field into all possible withBy names.
-	 * Convenient wrapper around {@link HandlerUtil#toAllWithByNames(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toAllWithByNames(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static java.util.List<String> toAllWithByNames(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toAllWithByNames(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -797,7 +796,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely with name for the stated field. (e.g. private boolean foo; to withFoo).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toWithName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toWithName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toWithName(JavacNode field) {
 		return HandlerUtil.toWithName(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -806,7 +805,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely with name for the stated field. (e.g. private boolean foo; to withFoo).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toWithName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toWithName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toWithName(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toWithName(field.getAst(), accessors, field.getName(), isBoolean(field));
@@ -815,7 +814,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely withBy name for the stated field. (e.g. private boolean foo; to withFooBy).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toWithByName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toWithByName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toWithByName(JavacNode field) {
 		return HandlerUtil.toWithByName(field.getAst(), getAccessorsForField(field), field.getName(), isBoolean(field));
@@ -824,7 +823,7 @@ public class JavacHandlerUtil {
 	/**
 	 * @return the likely withBy name for the stated field. (e.g. private boolean foo; to withFooBy).
 	 *
-	 * Convenient wrapper around {@link HandlerUtil#toWithByName(lombok.core.AnnotationValues, CharSequence, boolean)}.
+	 * Convenient wrapper around {@link HandlerUtil#toWithByName(AST, lombok.core.AnnotationValues, CharSequence, boolean)}.
 	 */
 	public static String toWithByName(JavacNode field, AnnotationValues<Accessors> accessors) {
 		return HandlerUtil.toWithByName(field.getAst(), accessors, field.getName(), isBoolean(field));
