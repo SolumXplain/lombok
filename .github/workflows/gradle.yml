@@ -1,0 +1,101 @@
+name: Gradle Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Cache Ivy dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ivyCache
+            lib
+          key: ivy-${{ hashFiles('**/ivy.xml') }}
+          restore-keys: |
+            ivy-
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Setup dependencies with Ant
+        run: ant -noinput deps
+
+      - name: Build with Gradle
+        run: ./gradlew build #  -x test 2>&1
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gradle-build-output
+          path: build/libs/
+
+  test-javac:
+    runs-on: ubuntu-24.04
+    needs: build
+    env:
+      EA_JDK: 27
+    strategy:
+      matrix:
+        jdk: [17, 21, 22, 23, 24, 25]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.jdk }}
+        if: ${{ matrix.jdk < env.EA_JDK }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: 'zulu'
+
+      - name: Set up JDK ${{ matrix.jdk }} Early Access release
+        if: ${{ matrix.jdk >= env.EA_JDK }}
+        uses: oracle-actions/setup-java@v1
+        with:
+          website: jdk.java.net
+          release: ${{ matrix.jdk }}
+          version: latest
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Run tests with Gradle
+        run: ./gradlew test 2>&1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gradle-test-results-jdk${{ matrix.jdk }}
+          path: build/reports/tests/test/
+
