@@ -114,35 +114,53 @@ This buildfile is part of projectlombok.org. It takes care of compiling and buil
 		<ivy:compile destdir="build/stubs" source="1.8" target="1.8" ecj="true">
 			<bootclasspath path="${jdk6-rt.loc}" />
 			<src path="src/stubs" />
-			<src path="src/javac-only-stubs" />
 			<classpath location="build/stubsstubs" />
 			<classpath location="build/stubs" />
 		</ivy:compile>
 
 		<ivy:compile destdir="build/lombok-utils" source="1.8" target="1.8" ecj="true">
 			<bootclasspath location="build/stubs" />
-			<bootclasspath path="${jdk6-rt.loc}" />
+			<bootclasspath path="${jdk8-rt.loc}" />
 			<src path="src/utils" />
 			<exclude name="lombok/javac/**" />
 			<classpath location="build/lombok-utils" />
-			<classpath refid="cp.javac6" />
+			<classpath refid="cp.javac8" />
 			<classpath refid="cp.ecj11" />
 		</ivy:compile>
-		<ivy:compile destdir="build/lombok-utils6" source="1.8" target="1.8" ecj="true">
-			<bootclasspath location="build/stubs" />
-			<bootclasspath path="${jdk8-rt.loc}" />
+
+		<!-- lombok-utils6 is actually lombok-utils-javac -->
+		<javac destdir="build/lombok-utils6" source="17" target="17" debug="true" encoding="UTF-8">
+			<compilerarg value="--add-modules" />
+			<compilerarg value="jdk.compiler" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED" />
 			<src path="src/utils" />
 			<include name="lombok/javac/**" />
-			<classpath refid="cp.javac8" />
 			<classpath path="build/lombok-utils:build/lombok-utils6" />
-		</ivy:compile>
-
+		</javac>
 		<!--
-			compile lombok proper. We target java 1.6 to be as compatible with older releases as we can, using a JDK6 boot rt to ensure we don't
-			use API that didn't exist in those versions yet. -->
-		<ivy:compile destdir="build/lombok-main" source="1.6" target="1.6" ecj="true" nowarn="true">
-			<bootclasspath location="build/stubs" />
-			<bootclasspath path="${jdk6-rt.loc}" />
+			compile lombok proper. -->
+		<javac destdir="build/lombok-main" source="17" target="17" debug="true" encoding="UTF-8">
 			<src path="src/launch" />
 			<src path="src/core" />
 			<src path="src/installer" />
@@ -150,10 +168,39 @@ This buildfile is part of projectlombok.org. It takes care of compiling and buil
 			<src path="src/delombok" />
 			<classpath refid="cp.build" />
 			<classpath refid="cp.eclipse-oxygen" />
-			<classpath refid="cp.javac6" />
 			<classpath path="build/lombok-utils:build/lombok-utils6:build/lombok-main:dist/spiProcessor.jar" />
-			<annotationProcessor jar="dist/spiProcessor.jar" processor="lombok.spi.SpiProcessor" />
-		</ivy:compile>
+			<compilerarg value="--add-modules" />
+			<compilerarg value="jdk.compiler" />
+			<compilerarg value="--add-reads" />
+			<compilerarg value="jdk.compiler=ALL-UNNAMED" />
+			<compilerarg value="-XDignore.symbol.file" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED" />
+			<compilerarg value="-processorpath" />
+			<compilerarg value="dist/spiProcessor.jar" />
+			<compilerarg value="-processor" />
+			<compilerarg value="lombok.spi.SpiProcessor" />
+		</javac>
 
 		<!--
 			a couple of classes to cater to the bits of javac8+ that require j8 language constructs/API types; the main lombok
