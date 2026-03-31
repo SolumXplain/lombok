@@ -73,13 +73,14 @@ public class Javac {
 
 	private static final AtomicInteger compilerVersion = new AtomicInteger(-1);
 
-	/* This section includes flags that would ordinarily be in com.sun.tools.javac.code.Flags, but which are 'too new' (we don't compile against older versions of javac for compatibility). */
-	public static final long RECORD = 1L << 61; // ClassSymbols, MethodSymbols, VarSymbols (Marks types as being records, as well as the 'fields' in the compact declaration, and the canonical constructor)
-	public static final long COMPACT_RECORD_CONSTRUCTOR = 1L << 51; // MethodSymbols (the 'implicit' many-args constructor that records have)
-	public static final long UNINITIALIZED_FIELD = 1L << 51; // VarSymbols (To identify fields that the compact record constructor won't initialize)
-	public static final long GENERATED_MEMBER = 1L << 24; // MethodSymbols, VarSymbols (marks methods and the constructor generated in records)
-	public static final long SEALED = 1L << 62 | 1L << 48; // ClassSymbols (Flag to indicate sealed class/interface declaration) - from the introduction of sealed until ~jdk23, this was 62. In jdk24, it's 48. Ugh.
-	public static final long NON_SEALED = 1L << 63; // ClassSymbols (Flag to indicate that the class/interface was declared with the non-sealed modifier)
+	/* Removed: These flags are now available from com.sun.tools.javac.code.Flags in JDK 17+.
+	   - RECORD (JDK 16+)
+	   - COMPACT_RECORD_CONSTRUCTOR (JDK 16+)
+	   - UNINITIALIZED_FIELD (JDK 16+)
+	   - GENERATED_MEMBER (JDK 16+)
+	   - SEALED (JDK 17+)
+	   - NON_SEALED (JDK 17+)
+	*/
 	public static final long IMPLICIT_CLASS = 1L << 19; // ClassSymbols (Flag to indicate that the class/interface wasn't actually written out; it is an implicitly declared top-level class). Introduced in JDK25, JEP512.
 
 	/**
@@ -121,18 +122,8 @@ public class Javac {
 		return version;
 	}
 
-	private static final Class<?> DOCCOMMENTTABLE_CLASS;
-
-	static {
-		Class<?> c = null;
-		try {
-			c = Class.forName("com.sun.tools.javac.tree.DocCommentTable");
-		} catch (Throwable ignore) {}
-		DOCCOMMENTTABLE_CLASS = c;
-	}
-
 	public static boolean instanceOfDocCommentTable(Object o) {
-		return DOCCOMMENTTABLE_CLASS != null && DOCCOMMENTTABLE_CLASS.isInstance(o);
+		return o instanceof DocCommentTable;
 	}
 
 	/**

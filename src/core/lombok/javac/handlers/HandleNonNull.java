@@ -22,6 +22,9 @@
 package lombok.javac.handlers;
 
 import static lombok.core.handlers.HandlerUtil.handleFlagUsage;
+import static com.sun.tools.javac.code.Flags.RECORD;
+import static com.sun.tools.javac.code.Flags.GENERATED_MEMBER;
+import static com.sun.tools.javac.code.Flags.COMPACT_RECORD_CONSTRUCTOR;
 import static lombok.javac.Javac.*;
 import static lombok.javac.JavacTreeMaker.TreeTag.treeTag;
 import static lombok.javac.JavacTreeMaker.TypeTag.typeTag;

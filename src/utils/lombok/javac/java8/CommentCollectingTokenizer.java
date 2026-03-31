@@ -21,9 +21,7 @@
  */
 package lombok.javac.java8;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.nio.CharBuffer;
+
 
 import com.sun.tools.javac.parser.JavaTokenizer;
 import com.sun.tools.javac.parser.ScannerFactory;
@@ -40,42 +38,22 @@ import lombok.javac.CommentInfo.StartConnection;
 
 class CommentCollectingTokenizer extends JavaTokenizer {
 
-	/** java 16 changed JavaTokenizer to extend UnicodeReader and changed the signature of the constructor */
-	private static final boolean tokenizerIsUnicodeReader = JavaTokenizer.class.getSuperclass().getSimpleName().equals("UnicodeReader");
-
 	private int prevEndPosition = 0;
 	private final ListBuffer<CommentInfo> comments = new ListBuffer<CommentInfo>();
 	private final ListBuffer<Integer> textBlockStarts;
 	private int endComment = 0;
 
 	static CommentCollectingTokenizer create(ScannerFactory fac, char[] buf, int inputLength, boolean findTextBlocks) {
-		if (tokenizerIsUnicodeReader) {
-			return new CommentCollectingTokenizer(fac, buf, inputLength, findTextBlocks, true);
-		}
 		return new CommentCollectingTokenizer(fac, buf, inputLength, findTextBlocks);
 	}
 
-	// pre java 16
 	private CommentCollectingTokenizer(ScannerFactory fac, char[] buf, int inputLength, boolean findTextBlocks) {
-		super(fac, new PositionUnicodeReader(fac, buf, inputLength));
-		textBlockStarts = findTextBlocks ? new ListBuffer<Integer>() : null;
-	}
-
-	// from java 16
-	private CommentCollectingTokenizer(ScannerFactory fac, char[] buf, int inputLength, boolean findTextBlocks, boolean java16Signature) {
 		super(fac, buf, inputLength);
 		textBlockStarts = findTextBlocks ? new ListBuffer<Integer>() : null;
 	}
 
 	int pos() {
-		if (tokenizerIsUnicodeReader) {
-			try {
-				return (int) positionMethodHandle.invokeExact(this);
-			} catch (Throwable e) {
-				throw new RuntimeException("Failed to invoke position() via MethodHandle", e);
-			}
-		}
-		return ((PositionUnicodeReader) reader).pos();
+		return position();
 	}
 
 	@Override public Token readToken() {
@@ -151,27 +129,6 @@ class CommentCollectingTokenizer extends JavaTokenizer {
 	}
 
 	private UnicodeReader reader() {
-		if (tokenizerIsUnicodeReader) {
-			return (UnicodeReader) (Object) this;
-		}
-		try {
-			return (UnicodeReader) readerFieldHandle.invokeExact(this);
-		} catch (Throwable e) {
-			throw new RuntimeException("Failed to access reader field via MethodHandle", e);
-		}
-	}
-
-	static class PositionUnicodeReader extends UnicodeReader {
-		protected PositionUnicodeReader(ScannerFactory sf, char[] input, int inputLength) {
-			super(sf, input, inputLength);
-		}
-
-		public PositionUnicodeReader(ScannerFactory sf, CharBuffer buffer) {
-			super(sf, buffer);
-		}
-
-		int pos() {
-			return bp;
-		}
+		return (UnicodeReader) (Object) this;
 	}
 }

@@ -22,6 +22,10 @@
 package lombok.javac.handlers;
 
 import static com.sun.tools.javac.code.Flags.GENERATEDCONSTR;
+import static com.sun.tools.javac.code.Flags.GENERATED_MEMBER;
+import static com.sun.tools.javac.code.Flags.SEALED;
+import static com.sun.tools.javac.code.Flags.NON_SEALED;
+import static com.sun.tools.javac.code.Flags.RECORD;
 import static lombok.core.handlers.HandlerUtil.*;
 import static lombok.javac.Javac.*;
 import static lombok.javac.JavacAugments.JCTree_generatedNode;

@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2009-2025 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -52,21 +52,21 @@ public class DocCommentIntegrator {
 		List<CommentInfo> out = new ArrayList<CommentInfo>();
 		CommentInfo lastExcisedComment = null;
 		JCTree lastNode = null;
-		
+
 		NavigableMap<Integer, JCTree> positionMap = buildNodePositionMap(unit);
-		
+
 		for (CommentInfo cmt : comments) {
 			if (!cmt.isJavadoc()) {
 				out.add(cmt);
 				continue;
 			}
-			
+
 			Entry<Integer, JCTree> entry = positionMap.ceilingEntry(cmt.endPos);
 			if (entry == null) {
 				out.add(cmt);
 				continue;
 			}
-			
+
 			JCTree node = entry.getValue();
 			if (node == lastNode) {
 				out.add(lastExcisedComment);
@@ -102,7 +102,7 @@ public class DocCommentIntegrator {
 		});
 		return positionMap;
 	}
-	
+
 	private static final Pattern CONTENT_STRIPPER = Pattern.compile("^(?:\\s*\\*)?(.*?)$", Pattern.MULTILINE);
 	@SuppressWarnings("unchecked") private boolean attach(JCCompilationUnit top, final JCTree node, CommentInfo cmt) {
 		String docCommentContent = cmt.content;
@@ -110,9 +110,9 @@ public class DocCommentIntegrator {
 		if (docCommentContent.endsWith("*/")) docCommentContent = docCommentContent.substring(0, docCommentContent.length() - 2);
 		docCommentContent = CONTENT_STRIPPER.matcher(docCommentContent).replaceAll("$1");
 		docCommentContent = docCommentContent.trim();
-		
+
 		if (Javac.getDocComments(top) == null) Javac.initDocComments(top);
-		
+
 		Object map_ = Javac.getDocComments(top);
 		if (map_ instanceof Map) {
 			((Map<JCTree, String>) map_).put(node, docCommentContent);
@@ -121,10 +121,10 @@ public class DocCommentIntegrator {
 			CommentAttacher_8.attach(node, docCommentContent, cmt.pos, map_);
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	/* Container for code which will cause class loader exceptions on javac below 8. By being in a separate class, we avoid the problem. */
 	private static class CommentAttacher_8 {
 		static void attach(final JCTree node, String docCommentContent, final int pos, Object map_) {
@@ -133,48 +133,15 @@ public class DocCommentIntegrator {
 				@Override public String getText() {
 					return docCommentContent_;
 				}
-				
-				@Override public Comment stripIndent() {
-					return this;
-				}
-				
-				@Override public DiagnosticPosition getPos() {
-					return new DiagnosticPosition() {
-						public JCTree getTree() {
-							return node;
-						}
-						
-						public int getStartPosition() {
-							return pos;
-						}
-						
-						public int getPreferredPosition() {
-							return pos;
-						}
-						
-						@SuppressWarnings("unused") // We compile against very old versions of javac intentionally (to support old stuff), but this is the method for newer impls.
-						public int getEndPosition(EndPosTable endPosTable) {
-							int end = endPosTable == null ? 0 : endPosTable.getEndPos(node);
-							if (end > pos) return end;
-							return pos + docCommentContent_.length();
-						}
-						
-						public int getEndPosition(Map<JCTree, Integer> endPosTable) {
-							Integer end = endPosTable.get(node);
-							if (end != null && end.intValue() > pos) return end.intValue();
-							return pos + docCommentContent_.length();
-						}
-					};
-				}
-				
+
 				@Override public int getSourcePos(int index) {
 					return pos + index;
 				}
-				
+
 				@Override public CommentStyle getStyle() {
 					return (CommentStyle) Javac.getCommentStyle();
 				}
-				
+
 				@Override public boolean isDeprecated() {
 					return JavacHandlerUtil.nodeHasDeprecatedFlag(node);
 				}

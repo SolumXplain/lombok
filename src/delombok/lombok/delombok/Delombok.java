@@ -721,12 +721,8 @@ public class Delombok {
 			if (!disablePreview && Javac.getJavaCompilerVersion() >= 11) argsList.add("--enable-preview");
 			if (Javac.getJavaCompilerVersion() >= 21) argsList.add("-proc:full");
 
-			if (Javac.getJavaCompilerVersion() < 15) {
-				String[] argv = argsList.toArray(new String[0]);
-				args.init("javac", argv);
-			} else {
-				args.init("javac", argsList);
-			}
+			// JDK 17+ requires Iterable<String>, not String[]
+			args.init("javac", argsList);
 			options.put("diags.legacy", "TRUE");
 			options.put("allowStringFolding", "FALSE");
 		} else {
