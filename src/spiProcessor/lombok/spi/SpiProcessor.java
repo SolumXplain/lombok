@@ -209,11 +209,14 @@ public class SpiProcessor extends AbstractProcessor {
 			parentage.add(superclass);
 			List<TypeMirror> needed = new ArrayList<TypeMirror>();
 			needed.addAll(spiTypes);
-			while (!parentage.isEmpty() && !spiTypes.isEmpty()) {
+			// Use isSameType() rather than equals() for TypeMirror comparison:
+			// TypeMirror.equals() is not guaranteed to compare structurally.
+			javax.lang.model.util.Types typeUtils = processingEnv.getTypeUtils();
+			while (!parentage.isEmpty() && !needed.isEmpty()) {
 				TypeMirror parent = parentage.pollFirst();
 				if (parent == null) continue;
-				needed.remove(parent);
-				parentage.addAll(processingEnv.getTypeUtils().directSupertypes(parent));
+				needed.removeIf(n -> typeUtils.isSameType(typeUtils.erasure(n), typeUtils.erasure(parent)));
+				parentage.addAll(typeUtils.directSupertypes(parent));
 			}
 			if (!needed.isEmpty()) {
 				report(elem, "is marked as providing " + needed + " but does not implement it");

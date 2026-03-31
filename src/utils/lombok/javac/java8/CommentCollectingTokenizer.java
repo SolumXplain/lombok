@@ -43,25 +43,10 @@ class CommentCollectingTokenizer extends JavaTokenizer {
 	/** java 16 changed JavaTokenizer to extend UnicodeReader and changed the signature of the constructor */
 	private static final boolean tokenizerIsUnicodeReader = JavaTokenizer.class.getSuperclass().getSimpleName().equals("UnicodeReader");
 
-	/** MethodHandle for invoking position() on UnicodeReader (Java 16+) */
-	private static final MethodHandle positionMethodHandle = initializePositionMethodHandle();
-
 	private int prevEndPosition = 0;
 	private final ListBuffer<CommentInfo> comments = new ListBuffer<CommentInfo>();
 	private final ListBuffer<Integer> textBlockStarts;
 	private int endComment = 0;
-
-	private static MethodHandle initializePositionMethodHandle() {
-		if (!tokenizerIsUnicodeReader) {
-			return null;
-		}
-		try {
-			java.lang.invoke.MethodType mt = java.lang.invoke.MethodType.methodType(int.class);
-			return MethodHandles.lookup().findVirtual(UnicodeReader.class, "position", mt);
-		} catch (NoSuchMethodException | IllegalAccessException e) {
-			throw new ExceptionInInitializerError(e);
-		}
-	}
 
 	static CommentCollectingTokenizer create(ScannerFactory fac, char[] buf, int inputLength, boolean findTextBlocks) {
 		if (tokenizerIsUnicodeReader) {
@@ -169,7 +154,11 @@ class CommentCollectingTokenizer extends JavaTokenizer {
 		if (tokenizerIsUnicodeReader) {
 			return (UnicodeReader) (Object) this;
 		}
-		return reader;
+		try {
+			return (UnicodeReader) readerFieldHandle.invokeExact(this);
+		} catch (Throwable e) {
+			throw new RuntimeException("Failed to access reader field via MethodHandle", e);
+		}
 	}
 
 	static class PositionUnicodeReader extends UnicodeReader {

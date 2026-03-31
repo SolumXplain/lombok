@@ -62,14 +62,15 @@ class SpiProcessorPersistence {
 		} catch (FileNotFoundException e) {
 			return null;
 		} catch (IOException e) {
+			if (e instanceof java.nio.file.NoSuchFileException) return null;
 			if (
 				e.getClass().getName().equals("org.eclipse.core.internal.resources.ResourceException") &&
 				e.getMessage() != null &&
 				e.getMessage().endsWith("does not exist.")) {
-				
+
 				return null;
 			}
-			
+
 			logger.printMessage(Kind.ERROR, SpiProcessor.toErrorMsg(e, pathName));
 			return null;
 		} catch (Exception other) {

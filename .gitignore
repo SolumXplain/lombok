@@ -3,6 +3,7 @@
 /build
 /dist
 /ivyCache
+/.gradle/
 /google.properties
 /debug
 /*.launch
