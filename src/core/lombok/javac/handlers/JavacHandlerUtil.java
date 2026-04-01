@@ -102,6 +102,7 @@ import lombok.core.TypeResolver;
 import lombok.core.configuration.CheckerFrameworkVersion;
 import lombok.core.configuration.NullAnnotationLibrary;
 import lombok.core.configuration.NullCheckExceptionType;
+import lombok.core.configuration.PackageName;
 import lombok.core.configuration.TypeName;
 import lombok.core.handlers.HandlerUtil;
 import lombok.core.handlers.HandlerUtil.FieldAccess;
@@ -127,28 +128,26 @@ public class JavacHandlerUtil {
 		return hasAnnotation("org.jspecify.annotations.Nullable", fieldNode);
 	}
 
+	/**
+	 * Return true if the specified field or parameter node is determined as non-null according
+	 * to JSpecify rules, but does not account for @NullUnmarked complexity.
+	 */
 	static boolean isNullMarked(JavacNode typeNode) {
-		return hasAnnotation("org.jspecify.annotations.NullMarked", typeNode);
-	}
+		if (hasAnnotation("org.jspecify.annotations.NullMarked", typeNode)) return true;
+		java.util.List<PackageName> nullMarkedPackages = typeNode.getAst().readConfiguration(ConfigurationKeys.NULL_MARKED_PACKAGES);
+		PackageName packageName = PackageName.valueOf(typeNode.getPackageDeclaration());
+    return nullMarkedPackages.contains(packageName);
+  }
 
 	/**
 	 * Find the parent class or interface
 	 */
-  static JavacNode getParentTypeNode(JavacNode childOfType) {
+	static JavacNode getParentTypeNode(JavacNode childOfType) {
 		JavacNode typeNode = childOfType;
 		while (typeNode != null && typeNode.getKind() != Kind.TYPE) typeNode = typeNode.up();
 		return typeNode;
 	}
 
-	/**
-	 * Return true if the specified field or parameter node is determined as non-null according
-	 * to JSpecify rules.
-	 * Currently supports @NullMarked on class. To support annotations on package-info.java, we
-	 * would need to place each type node under a package node. Supporting NullMarked on the type
-	 * seems adequate for now, and gives the option opt-in to null assertions on a per class basis
-	 * (i.e. have NullMarked be the default but allow a custom annotation to trigger null checks at
-	 * system boundaries only).
-	 */
 	private static boolean hasSkipNullCheckAnnotation(JavacNode node) {
 		java.util.List<TypeName> skipAnnotations = node.getAst().readConfiguration(ConfigurationKeys.NON_NULL_SKIP_ANNOTATIONS);
 		if (skipAnnotations == null || skipAnnotations.isEmpty()) return false;
@@ -1147,7 +1146,7 @@ public class JavacHandlerUtil {
 	/**
 	 * Returns the type of the field, unless a getter exists for this field, in which case the return type of the getter is returned.
 	 *
-	 * @see #createFieldAccessor(TreeMaker, JavacNode, FieldAccess)
+	 * @see #createFieldAccessor(JavacTreeMaker, JavacNode, FieldAccess, JCExpression)
 	 */
 	static JCExpression getFieldType(JavacNode field, FieldAccess fieldAccess) {
 		if (field.getKind() == Kind.METHOD) return ((JCMethodDecl) field.get()).restype;
