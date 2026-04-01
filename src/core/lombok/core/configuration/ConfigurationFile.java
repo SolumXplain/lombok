@@ -38,6 +38,7 @@ import java.util.zip.ZipInputStream;
 
 public abstract class ConfigurationFile {
 	private static final Pattern VARIABLE = Pattern.compile("\\<(.+?)\\>");
+	private static final Pattern PACKAGE_NAME = Pattern.compile("\\bpackage\\s+([\\w.]+)\\s*;");
 	private static final String LOMBOK_CONFIG_FILENAME = "lombok.config";
 	private static final Map<String, String> ENV = new HashMap<String, String>(System.getenv());
 	
@@ -58,6 +59,13 @@ public abstract class ConfigurationFile {
 	}
 	
 	public static ConfigurationFile forDirectory(File directory) {
+		if (new File(directory, "package-info.java").exists()) {
+			if(new File(directory, LOMBOK_CONFIG_FILENAME).exists()) {
+				// This restriction should not be necessary, but we could add a fake import=lombok.config to fix this
+				throw new IllegalStateException("Cannot have lombok.config and package-info.java in the same directory: " + directory.toString());
+			}
+			return new PackageInfoConfigurationFile(new File(directory, "package-info.java"));
+		}
 		return forFile(new File(directory, LOMBOK_CONFIG_FILENAME));
 	}
 	
@@ -333,6 +341,56 @@ public abstract class ConfigurationFile {
 		
 		@Override ConfigurationFile parent() {
 			return null;
+		}
+	}
+
+	/**
+	 * Very specific to just detecting {@code NullMarked} in package info.
+	 * This could be generalized.
+	 */
+	static class PackageInfoConfigurationFile extends RegularConfigurationFile {
+
+		private String _contents;
+
+		PackageInfoConfigurationFile(File file) {
+			super(file);
+		}
+
+		@Override
+		boolean exists() {
+			if (!super.exists()) {
+				return false;
+			}
+      try {
+        return contents().toString().length() > 0;
+      } catch (IOException e) {
+        return false;
+      }
+    }
+
+		@Override
+		CharSequence contents() throws IOException {
+			if (this._contents == null) {
+				_contents = getContents();
+      }
+			return _contents;
+		}
+
+		String getContents() throws IOException {
+			String content = super.contents().toString();
+			if (!content.contains("NullMarked")) {
+				return "";
+			}
+			String packageName = extractPackageName(content);
+			if (packageName == null) {
+				return "";
+			}
+			return "lombok.nullSafePackages += " + packageName + "\n";
+		}
+
+		private static String extractPackageName(String content) {
+			Matcher m = PACKAGE_NAME.matcher(content);
+			return m.find() ? m.group(1) : null;
 		}
 	}
 }
