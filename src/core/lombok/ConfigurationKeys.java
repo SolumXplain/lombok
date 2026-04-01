@@ -33,6 +33,7 @@ import lombok.core.configuration.JacksonVersion;
 import lombok.core.configuration.LogDeclaration;
 import lombok.core.configuration.NullAnnotationLibrary;
 import lombok.core.configuration.NullCheckExceptionType;
+import lombok.core.configuration.PackageName;
 import lombok.core.configuration.TypeName;
 
 /**
@@ -401,6 +402,16 @@ public class ConfigurationKeys {
 	 * If set, <em>any</em> usage of {@code @NonNull} results in a warning / error.
 	 */
 	public static final ConfigurationKey<FlagUsageType> NON_NULL_FLAG_USAGE = new ConfigurationKey<FlagUsageType>("lombok.nonNull.flagUsage", "Emit a warning or error if @NonNull is used.") {};
+
+	/**
+	 * lombok configuration: {@code lombok.nullSafePackages} += &lt;TypeName: fully-qualified package name&gt;.
+	 * <p>
+	 * Classes within packages in this list are treated as if they have {@code @NullMarked} on each
+	 * class.  If a package-info.java file is found with {@code @NullMarked} in the file, then
+	 * that package will automatically be recognised.
+	 */
+	public static final ConfigurationKey<List<PackageName>> NULL_MARKED_PACKAGES = new ConfigurationKey<List<PackageName>>("lombok.nullSafePackages", "Treat classes within these packages as if they had @NullMarked on each class") {};
+
 
 	// ----- SneakyThrows -----
 
