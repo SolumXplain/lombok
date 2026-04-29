@@ -39,7 +39,7 @@ import lombok.javac.Javac;
 
 public class DirectoryRunner extends Runner {
 	/** Add 1 or more file names to reduce the testset to just the named file(s). No files = test it all. */
-	private static final List<String> DEBUG_FOCUS_ON_FILE = Arrays.asList("NullMarkedPlain", "NullMarkedArrays", "NullMarkedPackageInfo"
+	private static final List<String> DEBUG_FOCUS_ON_FILE = Arrays.asList("NullMarkedPlain", "NullMarkedArrays", "NullMarkedPackageInfo", "NullUnmarkedInSubpackage"
 		);
 
 	/*
@@ -95,7 +95,7 @@ public class DirectoryRunner extends Runner {
 		@Override public boolean accept(File file) {
 			// Always omit package-info.java from tests because it's only there to control local tests
 			// (for now), and Lombok currently doesn't copy package annotations across
-			if (!file.isFile() || !file.getName().endsWith(".java") || file.getName().endWith("package-info.java")) return false;
+			if (!file.isFile() || !file.getName().endsWith(".java") || file.getName().endsWith("package-info.java")) return false;
 			boolean positiveFilter = false;
 			for (String dfof : DEBUG_FOCUS_ON_FILE) {
 				if (dfof.isEmpty()) continue;
