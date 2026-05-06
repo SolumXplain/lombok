@@ -6,6 +6,9 @@ public class AliasSimple {
     interface Sector {
     }
 
+    @org.jspecify.annotations.Nullable
+    private String defaultSector;
+
     public void test() {
         @org.jspecify.annotations.Nullable
         String code = "NYSE";

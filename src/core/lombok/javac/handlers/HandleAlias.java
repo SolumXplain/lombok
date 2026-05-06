@@ -44,6 +44,11 @@ public class HandleAlias extends JavacASTAdapter {
 		applyAlias(argNode, arg);
 	}
 
+	@Override
+	public void endVisitField(JavacNode fieldNode, JCVariableDecl field) {
+		applyAlias(fieldNode, field);
+	}
+
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
 		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
