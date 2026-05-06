@@ -11,4 +11,8 @@ public class AliasSimple {
         String code = "NYSE";
         System.out.println(code);
     }
+
+    public void process(@org.jspecify.annotations.Nullable String code) {
+        System.out.println(code);
+    }
 }

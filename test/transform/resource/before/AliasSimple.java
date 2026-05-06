@@ -8,4 +8,8 @@ public class AliasSimple {
         Sector code = "NYSE";
         System.out.println(code);
     }
+
+    public void process(Sector code) {
+        System.out.println(code);
+    }
 }

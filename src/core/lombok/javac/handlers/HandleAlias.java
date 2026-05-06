@@ -19,15 +19,16 @@ import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
+import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.List;
 
 /**
- * Handles {@link Alias}: replaces the alias type on a local variable declaration with the
- * real type and annotation declared in {@code @Alias(of=..., annotated=...)}.
+ * Handles {@link Alias}: replaces the alias type on local variable declarations and method
+ * parameters with the real type and annotation declared in {@code @Alias(of=..., annotated=...)}.
  *
- * <p>Only local variable declarations in the same compilation unit as the alias type are
- * currently supported. Cross-file (jar) alias types are a future enhancement.
+ * <p>Only types defined in the same compilation unit as the use site are currently supported.
+ * Cross-file (jar) alias types are a future enhancement.
  */
 @Provides(JavacASTVisitor.class)
 @HandlerPriority(HandleDelegate.HANDLE_DELEGATE_PRIORITY + 100)
@@ -35,7 +36,16 @@ public class HandleAlias extends JavacASTAdapter {
 
 	@Override
 	public void endVisitLocal(JavacNode localNode, JCVariableDecl local) {
-		JCTree typeTree = local.vartype;
+		applyAlias(localNode, local);
+	}
+
+	@Override
+	public void endVisitMethodArgument(JavacNode argNode, JCVariableDecl arg, JCMethodDecl method) {
+		applyAlias(argNode, arg);
+	}
+
+	private void applyAlias(JavacNode node, JCVariableDecl var) {
+		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
 
 		// Only handle simple name references (e.g. "Sector", not "pkg.Sector" or arrays).
@@ -43,25 +53,25 @@ public class HandleAlias extends JavacASTAdapter {
 		if (!(typeTree instanceof JCIdent)) return;
 		String typeName = ((JCIdent) typeTree).name.toString();
 
-		AliasInfo alias = findAliasInCompilationUnit(localNode, typeName);
+		AliasInfo alias = findAliasInCompilationUnit(node, typeName);
 		if (alias == null) return;
 
-		JavacNode sourceNode = localNode.getNodeFor(typeTree);
+		JavacNode sourceNode = node.getNodeFor(typeTree);
 
 		// Replace the declared type with the alias target type
-		JCExpression newVartype = chainDotsString(localNode, alias.ofTypeName);
+		JCExpression newVartype = chainDotsString(node, alias.ofTypeName);
 		recursiveSetGeneratedBy(newVartype, sourceNode);
-		local.vartype = newVartype;
+		var.vartype = newVartype;
 
 		// Prepend the target annotation to any annotations already on the variable
-		JCExpression annTypeExpr = chainDotsString(localNode, alias.annotatedTypeName);
-		JCAnnotation newAnn = localNode.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
+		JCExpression annTypeExpr = chainDotsString(node, alias.annotatedTypeName);
+		JCAnnotation newAnn = node.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
 		recursiveSetGeneratedBy(newAnn, sourceNode);
-		local.mods.annotations = local.mods.annotations == null
+		var.mods.annotations = var.mods.annotations == null
 				? List.of(newAnn)
-				: local.mods.annotations.prepend(newAnn);
+				: var.mods.annotations.prepend(newAnn);
 
-		localNode.getAst().setChanged();
+		node.getAst().setChanged();
 	}
 
 	/**
