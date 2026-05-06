@@ -49,6 +49,11 @@ public class HandleAlias extends JavacASTAdapter {
 		applyAlias(fieldNode, field);
 	}
 
+	@Override
+	public void endVisitMethod(JavacNode methodNode, JCMethodDecl method) {
+		applyAliasToReturnType(methodNode, method);
+	}
+
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
 		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
@@ -77,6 +82,31 @@ public class HandleAlias extends JavacASTAdapter {
 				: var.mods.annotations.prepend(newAnn);
 
 		node.getAst().setChanged();
+	}
+
+	private void applyAliasToReturnType(JavacNode methodNode, JCMethodDecl method) {
+		JCExpression restype = method.restype;
+		if (restype == null) return;
+		if (!(restype instanceof JCIdent)) return;
+		String typeName = ((JCIdent) restype).name.toString();
+
+		AliasInfo alias = findAliasInCompilationUnit(methodNode, typeName);
+		if (alias == null) return;
+
+		JavacNode sourceNode = methodNode.getNodeFor(restype);
+
+		JCExpression newRestype = chainDotsString(methodNode, alias.ofTypeName);
+		recursiveSetGeneratedBy(newRestype, sourceNode);
+		method.restype = newRestype;
+
+		JCExpression annTypeExpr = chainDotsString(methodNode, alias.annotatedTypeName);
+		JCAnnotation newAnn = methodNode.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
+		recursiveSetGeneratedBy(newAnn, sourceNode);
+		method.mods.annotations = method.mods.annotations == null
+				? List.of(newAnn)
+				: method.mods.annotations.prepend(newAnn);
+
+		methodNode.getAst().setChanged();
 	}
 
 	/**

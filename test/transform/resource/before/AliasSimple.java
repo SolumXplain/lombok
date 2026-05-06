@@ -14,4 +14,8 @@ public class AliasSimple {
     public void process(Sector code) {
         System.out.println(code);
     }
+
+    public Sector getDefaultSector() {
+        return defaultSector;
+    }
 }

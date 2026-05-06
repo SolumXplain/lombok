@@ -18,4 +18,9 @@ public class AliasSimple {
     public void process(@org.jspecify.annotations.Nullable String code) {
         System.out.println(code);
     }
+
+    @org.jspecify.annotations.Nullable
+    public String getDefaultSector() {
+        return defaultSector;
+    }
 }
