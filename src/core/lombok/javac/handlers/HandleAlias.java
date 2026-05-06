@@ -2,15 +2,33 @@ package lombok.javac.handlers;
 
 import static lombok.javac.handlers.JavacHandlerUtil.chainDotsString;
 import static lombok.javac.handlers.JavacHandlerUtil.recursiveSetGeneratedBy;
-import static lombok.javac.handlers.JavacHandlerUtil.typeMatches;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 import lombok.Alias;
 import lombok.core.HandlerPriority;
+import lombok.core.ImportList;
 import lombok.javac.JavacASTAdapter;
 import lombok.javac.JavacASTVisitor;
 import lombok.javac.JavacNode;
+import lombok.permit.Permit;
 import lombok.spi.Provides;
 
+import com.sun.tools.javac.comp.AttrContext;
+import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.main.JavaCompiler;
+import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
@@ -21,18 +39,29 @@ import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 
 /**
- * Handles {@link Alias}: replaces the alias type on local variable declarations and method
- * parameters with the real type and annotation declared in {@code @Alias(of=..., annotated=...)}.
+ * Handles {@link Alias}: replaces the alias type on local variable declarations, method
+ * parameters, fields, and return types with the real type and annotation declared in
+ * {@code @Alias(of=..., annotated=...)}.
  *
- * <p>Only types defined in the same compilation unit as the use site are currently supported.
- * Cross-file (jar) alias types are a future enhancement.
+ * <p>Alias types are located in:
+ * <ol>
+ *   <li>The same compilation unit (fast path)</li>
+ *   <li>Other source files in the same build (via compiler.todo)</li>
+ *   <li>Pre-compiled jar dependencies (via Javac Elements API)</li>
+ * </ol>
  */
 @Provides(JavacASTVisitor.class)
 @HandlerPriority(HandleDelegate.HANDLE_DELEGATE_PRIORITY + 100)
 public class HandleAlias extends JavacASTAdapter {
+
+	// Per-context registry of alias types found across all compilation units.
+	// WeakHashMap ensures entries are GC'd when the compilation context is released.
+	private static final WeakHashMap<Context, Map<String, AliasInfo>> CROSS_UNIT_REGISTRY =
+			new WeakHashMap<Context, Map<String, AliasInfo>>();
 
 	@Override
 	public void endVisitLocal(JavacNode localNode, JCVariableDecl local) {
@@ -57,23 +86,18 @@ public class HandleAlias extends JavacASTAdapter {
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
 		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
-
-		// Only handle simple name references (e.g. "Sector", not "pkg.Sector" or arrays).
-		// Qualified names and arrays can be added later.
 		if (!(typeTree instanceof JCIdent)) return;
 		String typeName = ((JCIdent) typeTree).name.toString();
 
-		AliasInfo alias = findAliasInCompilationUnit(node, typeName);
+		AliasInfo alias = findAlias(node, typeName);
 		if (alias == null) return;
 
 		JavacNode sourceNode = node.getNodeFor(typeTree);
 
-		// Replace the declared type with the alias target type
 		JCExpression newVartype = chainDotsString(node, alias.ofTypeName);
 		recursiveSetGeneratedBy(newVartype, sourceNode);
 		var.vartype = newVartype;
 
-		// Prepend the target annotation to any annotations already on the variable
 		JCExpression annTypeExpr = chainDotsString(node, alias.annotatedTypeName);
 		JCAnnotation newAnn = node.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
 		recursiveSetGeneratedBy(newAnn, sourceNode);
@@ -90,7 +114,7 @@ public class HandleAlias extends JavacASTAdapter {
 		if (!(restype instanceof JCIdent)) return;
 		String typeName = ((JCIdent) restype).name.toString();
 
-		AliasInfo alias = findAliasInCompilationUnit(methodNode, typeName);
+		AliasInfo alias = findAlias(methodNode, typeName);
 		if (alias == null) return;
 
 		JavacNode sourceNode = methodNode.getNodeFor(restype);
@@ -109,41 +133,136 @@ public class HandleAlias extends JavacASTAdapter {
 		methodNode.getAst().setChanged();
 	}
 
-	/**
-	 * Walks the compilation unit's type declarations (top-level and nested) looking for one named
-	 * {@code typeName} that carries {@code @Alias}.
-	 */
-	private AliasInfo findAliasInCompilationUnit(JavacNode localNode, String typeName) {
-		JavacNode cuNode = localNode;
+	// -------------------------------------------------------------------------
+	// Alias lookup: same CU → other source CUs → pre-compiled jars
+	// -------------------------------------------------------------------------
+
+	private AliasInfo findAlias(JavacNode node, String typeName) {
+		// 1. Current compilation unit — fast path, no context required
+		JavacNode cuNode = node;
 		while (cuNode.up() != null) cuNode = cuNode.up();
-		JCCompilationUnit cu = (JCCompilationUnit) cuNode.get();
-		return findAliasInDefs(localNode, cu.defs, typeName);
+		AliasInfo info = findAliasInDefs(((JCCompilationUnit) cuNode.get()).defs, typeName);
+		if (info != null) return info;
+
+		// 2. Other source files compiled in the same build
+		info = getCrossUnitRegistry(node.getContext()).get(typeName);
+		if (info != null) return info;
+
+		// 3. Pre-compiled jar dependency — resolve via FQN from imports
+		return findAliasInJar(node, typeName);
 	}
 
-	private AliasInfo findAliasInDefs(JavacNode sourceNode, List<? extends JCTree> defs, String typeName) {
+	// -------------------------------------------------------------------------
+	// Cross-unit registry: populated from compiler.todo on first use
+	// -------------------------------------------------------------------------
+
+	private static Map<String, AliasInfo> getCrossUnitRegistry(Context ctx) {
+		synchronized (CROSS_UNIT_REGISTRY) {
+			Map<String, AliasInfo> cached = CROSS_UNIT_REGISTRY.get(ctx);
+			if (cached != null) return cached;
+
+			Map<String, AliasInfo> registry = new HashMap<String, AliasInfo>();
+
+			// compiler.todo is populated by the Enter phase (which runs before annotation
+			// processing), so all source files in this build are already represented.
+			// JavaCompiler.instance() and the todo field require reflective access via Permit.
+			try {
+				Object compiler = Permit.invoke(
+						Permit.getMethod(JavaCompiler.class, "instance", Context.class),
+						null, ctx);
+				Iterable<?> todo = (Iterable<?>) Permit.getField(JavaCompiler.class, "todo").get(compiler);
+				Set<JCCompilationUnit> seen = Collections.newSetFromMap(
+						new IdentityHashMap<JCCompilationUnit, Boolean>());
+				for (Object envObj : todo) {
+					@SuppressWarnings("unchecked")
+					Env<AttrContext> env = (Env<AttrContext>) envObj;
+					JCCompilationUnit cu = env.toplevel;
+					if (cu == null || !seen.add(cu)) continue;
+					scanDefsIntoRegistry(cu.defs, registry);
+				}
+			} catch (Exception e) {
+				// If reflective access fails, fall back to jar-only resolution
+			}
+
+			CROSS_UNIT_REGISTRY.put(ctx, registry);
+			return registry;
+		}
+	}
+
+	private static void scanDefsIntoRegistry(List<? extends JCTree> defs, Map<String, AliasInfo> registry) {
 		for (JCTree def : defs) {
 			if (!(def instanceof JCClassDecl)) continue;
 			JCClassDecl classDecl = (JCClassDecl) def;
+			AliasInfo info = extractAliasInfo(classDecl);
+			// First definition wins; avoids ambiguity when two packages define same simple name
+			if (info != null && !registry.containsKey(classDecl.name.toString()))
+				registry.put(classDecl.name.toString(), info);
+			scanDefsIntoRegistry(classDecl.defs, registry);
+		}
+	}
 
+	// -------------------------------------------------------------------------
+	// Jar support: resolve FQN via imports, read annotation mirrors
+	// -------------------------------------------------------------------------
+
+	private static AliasInfo findAliasInJar(JavacNode node, String typeName) {
+		ImportList imports = node.getAst().getImportList();
+		String fqn = imports.getFullyQualifiedNameForSimpleName(typeName);
+		if (fqn == null) return null; // can't resolve FQN from explicit imports — skip
+
+		TypeElement typeElement = JavacElements.instance(node.getContext()).getTypeElement(fqn);
+		if (typeElement == null) return null;
+
+		String ofTypeName = null;
+		String annotatedTypeName = null;
+
+		for (AnnotationMirror mirror : typeElement.getAnnotationMirrors()) {
+			if (!Alias.class.getName().equals(mirror.getAnnotationType().toString())) continue;
+
+			for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
+					mirror.getElementValues().entrySet()) {
+				String memberName = entry.getKey().getSimpleName().toString();
+				Object value = entry.getValue().getValue();
+				if (!(value instanceof TypeMirror)) continue;
+				String typeFqn = value.toString();
+				if ("of".equals(memberName)) ofTypeName = typeFqn;
+				else if ("annotated".equals(memberName)) annotatedTypeName = typeFqn;
+			}
+			break;
+		}
+
+		if (ofTypeName != null && annotatedTypeName != null)
+			return new AliasInfo(ofTypeName, annotatedTypeName);
+		return null;
+	}
+
+	// -------------------------------------------------------------------------
+	// Shared AST scanning helpers
+	// -------------------------------------------------------------------------
+
+	private static AliasInfo findAliasInDefs(List<? extends JCTree> defs, String typeName) {
+		for (JCTree def : defs) {
+			if (!(def instanceof JCClassDecl)) continue;
+			JCClassDecl classDecl = (JCClassDecl) def;
 			if (typeName.equals(classDecl.name.toString())) {
-				AliasInfo info = extractAliasInfo(sourceNode, classDecl);
+				AliasInfo info = extractAliasInfo(classDecl);
 				if (info != null) return info;
 			}
-
-			// Recurse into nested type declarations
-			AliasInfo nested = findAliasInDefs(sourceNode, classDecl.defs, typeName);
+			AliasInfo nested = findAliasInDefs(classDecl.defs, typeName);
 			if (nested != null) return nested;
 		}
 		return null;
 	}
 
 	/**
-	 * Reads {@code @Alias(of=X.class, annotated=Y.class)} from a class declaration.
-	 * Returns {@code null} if the declaration does not have a valid {@code @Alias}.
+	 * Reads {@code @Alias(of=X.class, annotated=Y.class)} from a class declaration AST node.
+	 * Uses a direct name check (both simple and fully-qualified) rather than import resolution,
+	 * so it works correctly when scanning compilation units other than the current one.
 	 */
-	private AliasInfo extractAliasInfo(JavacNode sourceNode, JCClassDecl classDecl) {
+	private static AliasInfo extractAliasInfo(JCClassDecl classDecl) {
 		for (JCAnnotation ann : classDecl.mods.annotations) {
-			if (!typeMatches(Alias.class, sourceNode, ann.annotationType)) continue;
+			String annName = ann.annotationType.toString();
+			if (!"Alias".equals(annName) && !"lombok.Alias".equals(annName)) continue;
 
 			String ofTypeName = null;
 			String annotatedTypeName = null;
@@ -159,23 +278,16 @@ public class HandleAlias extends JavacASTAdapter {
 				else if ("annotated".equals(memberName)) annotatedTypeName = value;
 			}
 
-			if (ofTypeName != null && annotatedTypeName != null) {
+			if (ofTypeName != null && annotatedTypeName != null)
 				return new AliasInfo(ofTypeName, annotatedTypeName);
-			}
 		}
 		return null;
 	}
 
-	/**
-	 * Extracts the type name from a {@code Foo.class} expression — returns {@code "Foo"} or a
-	 * fully qualified name. Returns {@code null} if the expression is not a class literal.
-	 */
-	private String extractClassLiteralName(JCExpression expr) {
+	private static String extractClassLiteralName(JCExpression expr) {
 		if (expr instanceof JCFieldAccess) {
 			JCFieldAccess fa = (JCFieldAccess) expr;
-			if ("class".equals(fa.name.toString())) {
-				return fa.selected.toString();
-			}
+			if ("class".equals(fa.name.toString())) return fa.selected.toString();
 		}
 		return null;
 	}

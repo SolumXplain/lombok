@@ -36,6 +36,9 @@ This buildfile is part of projectlombok.org. It takes care of compiling and runn
 		<mkdir dir="build/tests" />
 		<ivy:compile destdir="build/teststubs" source="1.6" target="1.6" ecj="true" nowarn="true">
 			<src path="test/stubs" />
+			<classpath path="build/lombok-main" />
+			<classpath path="build/teststubs" />
+
 		</ivy:compile>
 		<ivy:compile destdir="build/tests" source="1.8" target="1.8" ecj="true" nowarn="true">
 			<bootclasspath path="${jdk6-rt.loc}" />
