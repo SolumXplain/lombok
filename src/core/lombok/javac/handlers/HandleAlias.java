@@ -3,6 +3,7 @@ package lombok.javac.handlers;
 import static lombok.javac.handlers.JavacHandlerUtil.chainDotsString;
 import static lombok.javac.handlers.JavacHandlerUtil.recursiveSetGeneratedBy;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -37,6 +38,7 @@ import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
+import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.Context;
@@ -98,12 +100,14 @@ public class HandleAlias extends JavacASTAdapter {
 		recursiveSetGeneratedBy(newVartype, sourceNode);
 		var.vartype = newVartype;
 
-		JCExpression annTypeExpr = chainDotsString(node, alias.annotatedTypeName);
-		JCAnnotation newAnn = node.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
-		recursiveSetGeneratedBy(newAnn, sourceNode);
-		var.mods.annotations = var.mods.annotations == null
-				? List.of(newAnn)
-				: var.mods.annotations.prepend(newAnn);
+		for (String annotatedTypeName : alias.annotatedTypeNames) {
+			JCExpression annTypeExpr = chainDotsString(node, annotatedTypeName);
+			JCAnnotation newAnn = node.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
+			recursiveSetGeneratedBy(newAnn, sourceNode);
+			var.mods.annotations = var.mods.annotations == null
+					? List.of(newAnn)
+					: var.mods.annotations.prepend(newAnn);
+		}
 
 		node.getAst().setChanged();
 	}
@@ -123,12 +127,14 @@ public class HandleAlias extends JavacASTAdapter {
 		recursiveSetGeneratedBy(newRestype, sourceNode);
 		method.restype = newRestype;
 
-		JCExpression annTypeExpr = chainDotsString(methodNode, alias.annotatedTypeName);
-		JCAnnotation newAnn = methodNode.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
-		recursiveSetGeneratedBy(newAnn, sourceNode);
-		method.mods.annotations = method.mods.annotations == null
-				? List.of(newAnn)
-				: method.mods.annotations.prepend(newAnn);
+		for (String annotatedTypeName : alias.annotatedTypeNames) {
+			JCExpression annTypeExpr = chainDotsString(methodNode, annotatedTypeName);
+			JCAnnotation newAnn = methodNode.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
+			recursiveSetGeneratedBy(newAnn, sourceNode);
+			method.mods.annotations = method.mods.annotations == null
+					? List.of(newAnn)
+					: method.mods.annotations.prepend(newAnn);
+		}
 
 		methodNode.getAst().setChanged();
 	}
@@ -214,7 +220,7 @@ public class HandleAlias extends JavacASTAdapter {
 		if (typeElement == null) return null;
 
 		String ofTypeName = null;
-		String annotatedTypeName = null;
+		java.util.List<String> annotatedTypeNames = new ArrayList<String>();
 
 		for (AnnotationMirror mirror : typeElement.getAnnotationMirrors()) {
 			if (!Alias.class.getName().equals(mirror.getAnnotationType().toString())) continue;
@@ -223,16 +229,26 @@ public class HandleAlias extends JavacASTAdapter {
 					mirror.getElementValues().entrySet()) {
 				String memberName = entry.getKey().getSimpleName().toString();
 				Object value = entry.getValue().getValue();
-				if (!(value instanceof TypeMirror)) continue;
-				String typeFqn = value.toString();
-				if ("of".equals(memberName)) ofTypeName = typeFqn;
-				else if ("annotated".equals(memberName)) annotatedTypeName = typeFqn;
+				if ("of".equals(memberName)) {
+					if (value instanceof TypeMirror) ofTypeName = value.toString();
+				} else if ("annotated".equals(memberName)) {
+					if (value instanceof TypeMirror) {
+						annotatedTypeNames.add(value.toString());
+					} else if (value instanceof java.util.List) {
+						for (Object item : (java.util.List<?>) value) {
+							if (item instanceof AnnotationValue) {
+								Object itemValue = ((AnnotationValue) item).getValue();
+								if (itemValue instanceof TypeMirror) annotatedTypeNames.add(itemValue.toString());
+							}
+						}
+					}
+				}
 			}
 			break;
 		}
 
-		if (ofTypeName != null && annotatedTypeName != null)
-			return new AliasInfo(ofTypeName, annotatedTypeName);
+		if (ofTypeName != null)
+			return new AliasInfo(ofTypeName, annotatedTypeNames);
 		return null;
 	}
 
@@ -255,7 +271,7 @@ public class HandleAlias extends JavacASTAdapter {
 	}
 
 	/**
-	 * Reads {@code @Alias(of=X.class, annotated=Y.class)} from a class declaration AST node.
+	 * Reads {@code @Alias(of=X.class, annotated={Y.class, ...})} from a class declaration AST node.
 	 * Uses a direct name check (both simple and fully-qualified) rather than import resolution,
 	 * so it works correctly when scanning compilation units other than the current one.
 	 */
@@ -265,21 +281,22 @@ public class HandleAlias extends JavacASTAdapter {
 			if (!"Alias".equals(annName) && !"lombok.Alias".equals(annName)) continue;
 
 			String ofTypeName = null;
-			String annotatedTypeName = null;
+			java.util.List<String> annotatedTypeNames = new ArrayList<String>();
 
 			for (JCExpression arg : ann.args) {
 				if (!(arg instanceof JCAssign)) continue;
 				JCAssign assign = (JCAssign) arg;
 				if (!(assign.lhs instanceof JCIdent)) continue;
 				String memberName = ((JCIdent) assign.lhs).name.toString();
-				String value = extractClassLiteralName(assign.rhs);
-				if (value == null) continue;
-				if ("of".equals(memberName)) ofTypeName = value;
-				else if ("annotated".equals(memberName)) annotatedTypeName = value;
+				if ("of".equals(memberName)) {
+					ofTypeName = extractClassLiteralName(assign.rhs);
+				} else if ("annotated".equals(memberName)) {
+					extractClassLiteralNames(assign.rhs, annotatedTypeNames);
+				}
 			}
 
-			if (ofTypeName != null && annotatedTypeName != null)
-				return new AliasInfo(ofTypeName, annotatedTypeName);
+			if (ofTypeName != null)
+				return new AliasInfo(ofTypeName, annotatedTypeNames);
 		}
 		return null;
 	}
@@ -292,13 +309,27 @@ public class HandleAlias extends JavacASTAdapter {
 		return null;
 	}
 
+	private static void extractClassLiteralNames(JCExpression expr, java.util.List<String> out) {
+		String single = extractClassLiteralName(expr);
+		if (single != null) {
+			out.add(single);
+			return;
+		}
+		if (expr instanceof JCNewArray) {
+			for (JCExpression elem : ((JCNewArray) expr).elems) {
+				String name = extractClassLiteralName(elem);
+				if (name != null) out.add(name);
+			}
+		}
+	}
+
 	private static final class AliasInfo {
 		final String ofTypeName;
-		final String annotatedTypeName;
+		final java.util.List<String> annotatedTypeNames;
 
-		AliasInfo(String ofTypeName, String annotatedTypeName) {
+		AliasInfo(String ofTypeName, java.util.List<String> annotatedTypeNames) {
 			this.ofTypeName = ofTypeName;
-			this.annotatedTypeName = annotatedTypeName;
+			this.annotatedTypeNames = annotatedTypeNames;
 		}
 	}
 }

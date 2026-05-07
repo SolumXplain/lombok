@@ -24,6 +24,6 @@ public @interface Alias {
 	/** The real type to substitute at each use site. */
 	Class<?> of();
 
-	/** The annotation to add to each use site. */
-	Class<? extends Annotation> annotated();
+	/** The annotations to add to each use site. */
+	Class<? extends Annotation>[] annotated() default {};
 }
