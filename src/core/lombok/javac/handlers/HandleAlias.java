@@ -6,6 +6,7 @@ import static lombok.javac.handlers.JavacHandlerUtil.recursiveSetGeneratedBy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -15,14 +16,17 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
 import lombok.Alias;
+import lombok.core.AST.Kind;
 import lombok.core.HandlerPriority;
 import lombok.core.ImportList;
 import lombok.javac.JavacASTAdapter;
 import lombok.javac.JavacASTVisitor;
 import lombok.javac.JavacNode;
+import lombok.javac.JavacTreeMaker;
 import lombok.permit.Permit;
 import lombok.spi.Provides;
 
@@ -95,20 +99,32 @@ public class HandleAlias extends JavacASTAdapter {
 		if (alias == null) return;
 
 		JavacNode sourceNode = node.getNodeFor(typeTree);
+		JavacTreeMaker maker = node.getTreeMaker();
+		String declTarget = declarationTargetFor(node.getKind());
 
 		JCExpression newVartype = chainDotsString(node, alias.ofTypeName);
 		recursiveSetGeneratedBy(newVartype, sourceNode);
-		var.vartype = newVartype;
 
 		for (String annotatedTypeName : alias.annotatedTypeNames) {
+			Set<String> targets = getAnnotationTargets(node, annotatedTypeName);
+			boolean isTypeUse = targets.contains("TYPE_USE");
+			boolean isDeclTarget = declTarget != null && (targets.isEmpty() || targets.contains(declTarget));
+
 			JCExpression annTypeExpr = chainDotsString(node, annotatedTypeName);
-			JCAnnotation newAnn = node.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
+			JCAnnotation newAnn = maker.Annotation(annTypeExpr, List.<JCExpression>nil());
 			recursiveSetGeneratedBy(newAnn, sourceNode);
-			var.mods.annotations = var.mods.annotations == null
-					? List.of(newAnn)
-					: var.mods.annotations.prepend(newAnn);
+
+			if (isTypeUse) {
+				newVartype = maker.AnnotatedType(List.of(newAnn), newVartype);
+				recursiveSetGeneratedBy(newVartype, sourceNode);
+			} else if (isDeclTarget) {
+				var.mods.annotations = var.mods.annotations == null
+						? List.of(newAnn)
+						: var.mods.annotations.prepend(newAnn);
+			}
 		}
 
+		var.vartype = newVartype;
 		node.getAst().setChanged();
 	}
 
@@ -122,21 +138,68 @@ public class HandleAlias extends JavacASTAdapter {
 		if (alias == null) return;
 
 		JavacNode sourceNode = methodNode.getNodeFor(restype);
+		JavacTreeMaker maker = methodNode.getTreeMaker();
 
 		JCExpression newRestype = chainDotsString(methodNode, alias.ofTypeName);
 		recursiveSetGeneratedBy(newRestype, sourceNode);
-		method.restype = newRestype;
 
 		for (String annotatedTypeName : alias.annotatedTypeNames) {
+			Set<String> targets = getAnnotationTargets(methodNode, annotatedTypeName);
+			boolean isTypeUse = targets.contains("TYPE_USE");
+			boolean isMethodTarget = targets.isEmpty() || targets.contains("METHOD");
+
 			JCExpression annTypeExpr = chainDotsString(methodNode, annotatedTypeName);
-			JCAnnotation newAnn = methodNode.getTreeMaker().Annotation(annTypeExpr, List.<JCExpression>nil());
+			JCAnnotation newAnn = maker.Annotation(annTypeExpr, List.<JCExpression>nil());
 			recursiveSetGeneratedBy(newAnn, sourceNode);
-			method.mods.annotations = method.mods.annotations == null
-					? List.of(newAnn)
-					: method.mods.annotations.prepend(newAnn);
+
+			if (isTypeUse) {
+				newRestype = maker.AnnotatedType(List.of(newAnn), newRestype);
+				recursiveSetGeneratedBy(newRestype, sourceNode);
+			} else if (isMethodTarget) {
+				method.mods.annotations = method.mods.annotations == null
+						? List.of(newAnn)
+						: method.mods.annotations.prepend(newAnn);
+			}
 		}
 
+		method.restype = newRestype;
 		methodNode.getAst().setChanged();
+	}
+
+	private static String declarationTargetFor(Kind kind) {
+		switch (kind) {
+		case FIELD: return "FIELD";
+		case ARGUMENT: return "PARAMETER";
+		case LOCAL: return "LOCAL_VARIABLE";
+		default: return null;
+		}
+	}
+
+	private static Set<String> getAnnotationTargets(JavacNode node, String annotationFqn) {
+		Set<String> targets = new HashSet<String>();
+		try {
+			TypeElement annElement = JavacElements.instance(node.getContext()).getTypeElement(annotationFqn);
+			if (annElement == null) return targets;
+			for (AnnotationMirror mirror : annElement.getAnnotationMirrors()) {
+				if (!"java.lang.annotation.Target".equals(mirror.getAnnotationType().toString())) continue;
+				for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : mirror.getElementValues().entrySet()) {
+					addTargetValues(entry.getValue().getValue(), targets);
+				}
+			}
+		} catch (Exception e) {
+			// If lookup fails, return empty targets; caller treats this as "no @Target known"
+		}
+		return targets;
+	}
+
+	private static void addTargetValues(Object value, Set<String> targets) {
+		if (value instanceof java.util.List) {
+			for (Object v : (java.util.List<?>) value) {
+				if (v instanceof AnnotationValue) addTargetValues(((AnnotationValue) v).getValue(), targets);
+			}
+		} else if (value instanceof VariableElement) {
+			targets.add(((VariableElement) value).getSimpleName().toString());
+		}
 	}
 
 	// -------------------------------------------------------------------------
