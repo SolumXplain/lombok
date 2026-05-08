@@ -115,8 +115,21 @@ public class HandleAlias extends JavacASTAdapter {
 			recursiveSetGeneratedBy(newAnn, sourceNode);
 
 			if (isTypeUse) {
-				newVartype = maker.AnnotatedType(List.of(newAnn), newVartype);
-				recursiveSetGeneratedBy(newVartype, sourceNode);
+				if (newVartype instanceof JCIdent) {
+					// Simple (unqualified) type: add to mods so the annotation lands before the
+					// keyword on its own line. JCAnnotatedType on a simple name prints inline
+					// (e.g. "private @Nullable String"), which the parser re-distributes into
+					// mods.annotations on re-parse, breaking idempotency.
+					var.mods.annotations = var.mods.annotations == null
+							? List.of(newAnn)
+							: var.mods.annotations.prepend(newAnn);
+				} else {
+					// Qualified type (e.g. java.lang.String): TYPE_USE annotation must sit on
+					// the innermost component ("java.lang.@Nullable String") — placing it in
+					// mods gives a "scoping construct" compile error.
+					newVartype = maker.AnnotatedType(List.of(newAnn), newVartype);
+					recursiveSetGeneratedBy(newVartype, sourceNode);
+				}
 			} else if (isDeclTarget) {
 				var.mods.annotations = var.mods.annotations == null
 						? List.of(newAnn)
@@ -153,8 +166,17 @@ public class HandleAlias extends JavacASTAdapter {
 			recursiveSetGeneratedBy(newAnn, sourceNode);
 
 			if (isTypeUse) {
-				newRestype = maker.AnnotatedType(List.of(newAnn), newRestype);
-				recursiveSetGeneratedBy(newRestype, sourceNode);
+				if (newRestype instanceof JCIdent) {
+					// Simple return type: annotation in mods prints before the access modifier
+					// on its own line and is idempotent on re-parse.
+					method.mods.annotations = method.mods.annotations == null
+							? List.of(newAnn)
+							: method.mods.annotations.prepend(newAnn);
+				} else {
+					// Qualified return type: must use JCAnnotatedType to avoid "scoping construct" error.
+					newRestype = maker.AnnotatedType(List.of(newAnn), newRestype);
+					recursiveSetGeneratedBy(newRestype, sourceNode);
+				}
 			} else if (isMethodTarget) {
 				method.mods.annotations = method.mods.annotations == null
 						? List.of(newAnn)

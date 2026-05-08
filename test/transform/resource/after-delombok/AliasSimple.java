@@ -6,10 +6,12 @@ public class AliasSimple {
     interface Sector {
     }
 
-    private @org.jspecify.annotations.Nullable String defaultSector;
+    @org.jspecify.annotations.Nullable
+    private String defaultSector;
 
     public void test() {
-        @org.jspecify.annotations.Nullable String code = "NYSE";
+        @org.jspecify.annotations.Nullable
+        String code = "NYSE";
         System.out.println(code);
     }
 
@@ -18,7 +20,8 @@ public class AliasSimple {
     }
 
 
-    public @org.jspecify.annotations.Nullable String getDefaultSector() {
+    @org.jspecify.annotations.Nullable
+    public String getDefaultSector() {
         return defaultSector;
     }
 }

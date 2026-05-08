@@ -160,7 +160,7 @@ public class PrettyPrinter extends JCTree.Visitor {
 	private final Map<JCTree, String> docComments;
 	private final DocCommentTable docTable;
 	private int indent = 0;
-	
+
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public PrettyPrinter(Writer out, JCCompilationUnit cu, List<CommentInfo> comments, int[] textBlockStarts, FormatPreferences preferences) {
 		this.out = out;
@@ -684,7 +684,7 @@ public class PrettyPrinter extends JCTree.Visitor {
 		printVarDef0(tree);
 		println(";", tree);
 	}
-	
+
 	private void printVarDefInline(JCVariableDecl tree) {
 		printAnnotations(tree.mods.annotations, false);
 		printModifierKeywords(tree.mods);
@@ -834,7 +834,7 @@ public class PrettyPrinter extends JCTree.Visitor {
 			print(tree.typarams, ", ");
 			print("> ");
 		}
-		
+
 		if (isConstructor) {
 			print(currentTypeName == null ? "<init>" : currentTypeName);
 		} else {
