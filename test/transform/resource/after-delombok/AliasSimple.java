@@ -7,20 +7,23 @@ public class AliasSimple {
     }
 
     @org.jspecify.annotations.Nullable
+    @lombok.Typed(Sector.class)
     private String defaultSector;
 
     public void test() {
         @org.jspecify.annotations.Nullable
+        @lombok.Typed(Sector.class)
         String code = "NYSE";
         System.out.println(code);
     }
 
-    public void process(@org.jspecify.annotations.Nullable String code) {
+    public void process(@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String code) {
         System.out.println(code);
     }
 
 
     @org.jspecify.annotations.Nullable
+    @lombok.Typed(Sector.class)
     public String getDefaultSector() {
         return defaultSector;
     }

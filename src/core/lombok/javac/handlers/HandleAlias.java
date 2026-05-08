@@ -105,6 +105,13 @@ public class HandleAlias extends JavacASTAdapter {
 		JCExpression newVartype = chainDotsString(node, alias.ofTypeName);
 		recursiveSetGeneratedBy(newVartype, sourceNode);
 
+		// For qualified types (e.g. java.lang.String), TYPE_USE annotations must sit
+		// on the innermost name component ("java.lang.@Nullable String") rather than
+		// in mods.annotations, which would cause a "scoping construct" compile error.
+		// We collect them all and produce a single JCAnnotatedType at the end.
+		boolean isQualifiedType = !(newVartype instanceof JCIdent);
+		List<JCAnnotation> typeAnnotations = List.nil();
+
 		for (String annotatedTypeName : alias.annotatedTypeNames) {
 			Set<String> targets = getAnnotationTargets(node, annotatedTypeName);
 			boolean isTypeUse = targets.contains("TYPE_USE");
@@ -115,26 +122,35 @@ public class HandleAlias extends JavacASTAdapter {
 			recursiveSetGeneratedBy(newAnn, sourceNode);
 
 			if (isTypeUse) {
-				if (newVartype instanceof JCIdent) {
-					// Simple (unqualified) type: add to mods so the annotation lands before the
-					// keyword on its own line. JCAnnotatedType on a simple name prints inline
-					// (e.g. "private @Nullable String"), which the parser re-distributes into
-					// mods.annotations on re-parse, breaking idempotency.
+				if (!isQualifiedType) {
 					var.mods.annotations = var.mods.annotations == null
 							? List.of(newAnn)
 							: var.mods.annotations.prepend(newAnn);
 				} else {
-					// Qualified type (e.g. java.lang.String): TYPE_USE annotation must sit on
-					// the innermost component ("java.lang.@Nullable String") — placing it in
-					// mods gives a "scoping construct" compile error.
-					newVartype = maker.AnnotatedType(List.of(newAnn), newVartype);
-					recursiveSetGeneratedBy(newVartype, sourceNode);
+					typeAnnotations = typeAnnotations.append(newAnn);
 				}
 			} else if (isDeclTarget) {
 				var.mods.annotations = var.mods.annotations == null
 						? List.of(newAnn)
 						: var.mods.annotations.prepend(newAnn);
 			}
+		}
+
+		// @Typed(OriginalAlias.class) is TYPE_USE: records which alias was here.
+		JCExpression classLit = maker.Select(chainDotsString(node, typeName), node.toName("class"));
+		JCAnnotation typedAnn = maker.Annotation(chainDotsString(node, "lombok.Typed"), List.of(classLit));
+		recursiveSetGeneratedBy(typedAnn, sourceNode);
+		if (!isQualifiedType) {
+			var.mods.annotations = var.mods.annotations == null
+					? List.of(typedAnn)
+					: var.mods.annotations.append(typedAnn);
+		} else {
+			typeAnnotations = typeAnnotations.append(typedAnn);
+		}
+
+		if (isQualifiedType && typeAnnotations.nonEmpty()) {
+			newVartype = maker.AnnotatedType(typeAnnotations, newVartype);
+			recursiveSetGeneratedBy(newVartype, sourceNode);
 		}
 
 		var.vartype = newVartype;
@@ -156,6 +172,9 @@ public class HandleAlias extends JavacASTAdapter {
 		JCExpression newRestype = chainDotsString(methodNode, alias.ofTypeName);
 		recursiveSetGeneratedBy(newRestype, sourceNode);
 
+		boolean isQualifiedType = !(newRestype instanceof JCIdent);
+		List<JCAnnotation> typeAnnotations = List.nil();
+
 		for (String annotatedTypeName : alias.annotatedTypeNames) {
 			Set<String> targets = getAnnotationTargets(methodNode, annotatedTypeName);
 			boolean isTypeUse = targets.contains("TYPE_USE");
@@ -166,22 +185,34 @@ public class HandleAlias extends JavacASTAdapter {
 			recursiveSetGeneratedBy(newAnn, sourceNode);
 
 			if (isTypeUse) {
-				if (newRestype instanceof JCIdent) {
-					// Simple return type: annotation in mods prints before the access modifier
-					// on its own line and is idempotent on re-parse.
+				if (!isQualifiedType) {
 					method.mods.annotations = method.mods.annotations == null
 							? List.of(newAnn)
 							: method.mods.annotations.prepend(newAnn);
 				} else {
-					// Qualified return type: must use JCAnnotatedType to avoid "scoping construct" error.
-					newRestype = maker.AnnotatedType(List.of(newAnn), newRestype);
-					recursiveSetGeneratedBy(newRestype, sourceNode);
+					typeAnnotations = typeAnnotations.append(newAnn);
 				}
 			} else if (isMethodTarget) {
 				method.mods.annotations = method.mods.annotations == null
 						? List.of(newAnn)
 						: method.mods.annotations.prepend(newAnn);
 			}
+		}
+
+		JCExpression classLit = maker.Select(chainDotsString(methodNode, typeName), methodNode.toName("class"));
+		JCAnnotation typedAnn = maker.Annotation(chainDotsString(methodNode, "lombok.Typed"), List.of(classLit));
+		recursiveSetGeneratedBy(typedAnn, sourceNode);
+		if (!isQualifiedType) {
+			method.mods.annotations = method.mods.annotations == null
+					? List.of(typedAnn)
+					: method.mods.annotations.append(typedAnn);
+		} else {
+			typeAnnotations = typeAnnotations.append(typedAnn);
+		}
+
+		if (isQualifiedType && typeAnnotations.nonEmpty()) {
+			newRestype = maker.AnnotatedType(typeAnnotations, newRestype);
+			recursiveSetGeneratedBy(newRestype, sourceNode);
 		}
 
 		method.restype = newRestype;
