@@ -32,7 +32,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 
 import com.sun.tools.javac.tree.DocCommentTable;
 import com.sun.tools.javac.tree.JCTree;
@@ -86,6 +94,8 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.JCWhileLoop;
 import com.sun.tools.javac.tree.JCTree.JCWildcard;
 import com.sun.tools.javac.tree.JCTree.TypeBoundKind;
+import com.sun.tools.javac.model.JavacElements;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
@@ -156,18 +166,20 @@ public class PrettyPrinter extends JCTree.Visitor {
 	private List<CommentInfo> comments;
 	private final int[] textBlockStarts;
 	private final FormatPreferences formatPreferences;
-	
+	private final Context context;
+
 	private final Map<JCTree, String> docComments;
 	private final DocCommentTable docTable;
 	private int indent = 0;
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public PrettyPrinter(Writer out, JCCompilationUnit cu, List<CommentInfo> comments, int[] textBlockStarts, FormatPreferences preferences) {
+	public PrettyPrinter(Writer out, JCCompilationUnit cu, List<CommentInfo> comments, int[] textBlockStarts, FormatPreferences preferences, Context context) {
 		this.out = out;
 		this.comments = comments;
 		this.textBlockStarts = textBlockStarts;
 		this.compilationUnit = cu;
 		this.formatPreferences = preferences;
+		this.context = context;
 		
 		/* load doc comments */ {
 			Object dc = getDocComments(compilationUnit);
@@ -679,8 +691,21 @@ public class PrettyPrinter extends JCTree.Visitor {
 			printEnumMember(tree);
 			return;
 		}
-		printAnnotations(tree.mods.annotations, true);
-		printModifierKeywords(tree.mods);
+		boolean hasKeywords = (tree.mods.flags & ~(long)ENUM) != 0;
+		if (hasKeywords && tree.mods.annotations.nonEmpty() && context != null) {
+			List<JCAnnotation> declAnns = List.nil();
+			List<JCAnnotation> typeAnns = List.nil();
+			for (JCAnnotation ann : tree.mods.annotations) {
+				if (isTypeUse(ann)) typeAnns = typeAnns.append(ann);
+				else declAnns = declAnns.append(ann);
+			}
+			printAnnotations(declAnns, true);
+			printModifierKeywords(tree.mods);
+			printAnnotations(typeAnns, false);
+		} else {
+			printAnnotations(tree.mods.annotations, true);
+			printModifierKeywords(tree.mods);
+		}
 		printVarDef0(tree);
 		println(";", tree);
 	}
@@ -1029,6 +1054,47 @@ public class PrettyPrinter extends JCTree.Visitor {
 				align();
 			} else print(" ");
 		}
+	}
+
+	// Annotation targets that indicate a declaration-scope annotation (not purely type-level).
+	private static final Set<String> DECLARATION_TARGETS = new HashSet<String>(Arrays.asList(
+		"PACKAGE", "TYPE", "ANNOTATION_TYPE", "METHOD", "CONSTRUCTOR",
+		"FIELD", "PARAMETER", "LOCAL_VARIABLE", "MODULE", "RECORD_COMPONENT"
+	));
+
+	// Returns true only if the annotation is purely TYPE_USE (no declaration-scope targets).
+	// Annotations like @NonNull that have both TYPE_USE and FIELD stay before the modifier.
+	private boolean isTypeUse(JCAnnotation ann) {
+		String name = ann.annotationType.toString();
+		try {
+			TypeElement elem = JavacElements.instance(context).getTypeElement(name);
+			if (elem == null) return false;
+			for (AnnotationMirror mirror : elem.getAnnotationMirrors()) {
+				if (!"java.lang.annotation.Target".equals(mirror.getAnnotationType().toString())) continue;
+				for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : mirror.getElementValues().entrySet()) {
+					Set<String> targets = collectTargets(entry.getValue().getValue());
+					return targets.contains("TYPE_USE") && isDisjoint(targets, DECLARATION_TARGETS);
+				}
+			}
+		} catch (Exception e) { /* fall through */ }
+		return false;
+	}
+
+	private static Set<String> collectTargets(Object value) {
+		Set<String> result = new HashSet<String>();
+		if (value instanceof java.util.List) {
+			for (Object v : (java.util.List<?>) value) {
+				if (v instanceof AnnotationValue) result.addAll(collectTargets(((AnnotationValue) v).getValue()));
+			}
+		} else if (value instanceof VariableElement) {
+			result.add(((VariableElement) value).getSimpleName().toString());
+		}
+		return result;
+	}
+
+	private static boolean isDisjoint(Set<String> a, Set<String> b) {
+		for (String s : a) if (b.contains(s)) return false;
+		return true;
 	}
 	
 	private void printModifierKeywords(JCModifiers tree) {
