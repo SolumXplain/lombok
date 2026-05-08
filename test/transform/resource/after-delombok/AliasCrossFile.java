@@ -1,18 +1,24 @@
 import com.example.Sector;
 
 public class AliasCrossFile {
-    private java.lang.@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String field;
+    @org.jspecify.annotations.Nullable
+    @lombok.Typed(Sector.class)
+    private String field;
 
-    public java.lang.@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String getField() {
+    @org.jspecify.annotations.Nullable
+    @lombok.Typed(Sector.class)
+    public String getField() {
         return field;
     }
 
-    public void setField(java.lang.@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String s) {
+    public void setField(@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String s) {
         this.field = s;
     }
 
     public void process() {
-        java.lang.@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String local = field;
+        @org.jspecify.annotations.Nullable
+        @lombok.Typed(Sector.class)
+        String local = field;
         System.out.println(local);
     }
 }

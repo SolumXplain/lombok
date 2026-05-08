@@ -346,15 +346,15 @@ public class HandleAlias extends JavacASTAdapter {
 				String memberName = entry.getKey().getSimpleName().toString();
 				Object value = entry.getValue().getValue();
 				if ("of".equals(memberName)) {
-					if (value instanceof TypeMirror) ofTypeName = value.toString();
+					if (value instanceof TypeMirror) ofTypeName = stripJavaLang(value.toString());
 				} else if ("annotated".equals(memberName)) {
 					if (value instanceof TypeMirror) {
-						annotatedTypeNames.add(value.toString());
+						annotatedTypeNames.add(stripJavaLang(value.toString()));
 					} else if (value instanceof java.util.List) {
 						for (Object item : (java.util.List<?>) value) {
 							if (item instanceof AnnotationValue) {
 								Object itemValue = ((AnnotationValue) item).getValue();
-								if (itemValue instanceof TypeMirror) annotatedTypeNames.add(itemValue.toString());
+								if (itemValue instanceof TypeMirror) annotatedTypeNames.add(stripJavaLang(itemValue.toString()));
 							}
 						}
 					}
@@ -437,6 +437,11 @@ public class HandleAlias extends JavacASTAdapter {
 				if (name != null) out.add(name);
 			}
 		}
+	}
+
+	private static String stripJavaLang(String fqn) {
+		if (fqn.startsWith("java.lang.") && fqn.indexOf('.', 10) < 0) return fqn.substring(10);
+		return fqn;
 	}
 
 	private static final class AliasInfo {
