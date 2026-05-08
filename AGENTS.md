@@ -34,6 +34,11 @@ include a unified diff showing expected vs actual.
 
 ## Updating expected output
 
+**Always ask the user for confirmation before modifying any file under
+`test/transform/resource/after-delombok/`.** These files are the canonical
+specification of what delombok should produce; unreviewed edits can silently
+lower the quality bar or mask regressions.
+
 When a handler change intentionally alters delombok output, update the
 corresponding file in:
 
