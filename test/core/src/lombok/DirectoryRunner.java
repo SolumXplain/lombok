@@ -39,8 +39,7 @@ import lombok.javac.Javac;
 
 public class DirectoryRunner extends Runner {
 	/** Add 1 or more file names to reduce the testset to just the named file(s). No files = test it all. */
-	private static final List<String> DEBUG_FOCUS_ON_FILE = Arrays.asList("NullMarkedPlain", "NullMarkedArrays", "NullMarkedPackageInfo", "NullUnmarkedInSubpackage"
-		);
+	private static final List<String> DEBUG_FOCUS_ON_FILE = Arrays.asList();
 
 	/*
 	 * If this is set to true, you are decreeing that all tests pass, and that any test that dares to say it does not, means the test is wrong and not lombok: The framework will <strong>update</strong> the 'target' so that it now passes.
