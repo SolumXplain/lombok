@@ -1,9 +1,7 @@
 import com.example.Sector;
 
 public class AliasCrossFile {
-    @org.jspecify.annotations.Nullable
-    @lombok.Typed(Sector.class)
-    private String field;
+    private @org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String field;
 
     @org.jspecify.annotations.Nullable
     @lombok.Typed(Sector.class)

@@ -6,9 +6,7 @@ public class AliasSimple {
     interface Sector {
     }
 
-    @org.jspecify.annotations.Nullable
-    @lombok.Typed(Sector.class)
-    private String defaultSector;
+    private @org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String defaultSector;
 
     public void test() {
         @org.jspecify.annotations.Nullable

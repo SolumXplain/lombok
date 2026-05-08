@@ -3,8 +3,7 @@ import java.lang.annotation.*;
 @org.jspecify.annotations.NullMarked
 class NullMarkedArrays {
 	// should generate null check - TODO update after- and fix implementation
-	@org.jspecify.annotations.Nullable
-	private String[] arrayOfNullableStrings;
+	private @org.jspecify.annotations.Nullable String[] arrayOfNullableStrings;
 	// should not generate null check
 	private byte @org.jspecify.annotations.Nullable [] nullableByteArray;
 	@java.lang.SuppressWarnings("all")
