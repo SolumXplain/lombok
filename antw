@@ -1,0 +1,6 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+JAVA17_HOME="$HOME/.jdks/$(ls "$HOME/.jdks/" | grep "17" | tail -n1)"
+exec "$JAVA17_HOME/bin/java" -Dant.home="$SCRIPT_DIR/bootstrap" \
+    -cp "$SCRIPT_DIR/bootstrap/ant.jar:$SCRIPT_DIR/bootstrap/lib/junit.jar" \
+    org.apache.tools.ant.launch.Launcher "$@"
