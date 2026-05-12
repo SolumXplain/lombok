@@ -35,6 +35,8 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
@@ -74,11 +76,12 @@ public class HandleAlias extends JavacASTAdapter {
 	@Override
 	public void endVisitType(JavacNode typeNode, JCClassDecl type) {
 		boolean changed = false;
-		if (type.extending instanceof JCTypeApply) {
-			if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) type.extending))
+		Tree extendsClause = ((ClassTree) type).getExtendsClause();
+		if (extendsClause instanceof JCTypeApply) {
+			if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) extendsClause))
 				changed = true;
 		}
-		for (JCExpression iface : type.implementing) {
+		for (Tree iface : ((ClassTree) type).getImplementsClause()) {
 			if (iface instanceof JCTypeApply) {
 				if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) iface))
 					changed = true;
