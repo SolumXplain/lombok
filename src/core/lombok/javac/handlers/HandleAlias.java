@@ -45,6 +45,7 @@ import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
+import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCReturn;
 import com.sun.tools.javac.tree.JCTree.JCTypeApply;
@@ -122,6 +123,13 @@ public class HandleAlias extends JavacASTAdapter {
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
 		if (var.init instanceof JCTypeCast)
 			applyAliasToCast(node, (JCTypeCast) var.init);
+		if (var.init instanceof JCNewClass) {
+			JCExpression clazz = ((JCNewClass) var.init).clazz;
+			if (clazz instanceof JCTypeApply) {
+				if (replaceAliasesInTypeArguments(node, (JCTypeApply) clazz))
+					node.getAst().setChanged();
+			}
+		}
 
 		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
