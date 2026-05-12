@@ -72,6 +72,22 @@ public class HandleAlias extends JavacASTAdapter {
 			new WeakHashMap<Context, Map<String, AliasInfo>>();
 
 	@Override
+	public void endVisitType(JavacNode typeNode, JCClassDecl type) {
+		boolean changed = false;
+		if (type.extending instanceof JCTypeApply) {
+			if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) type.extending))
+				changed = true;
+		}
+		for (JCExpression iface : type.implementing) {
+			if (iface instanceof JCTypeApply) {
+				if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) iface))
+					changed = true;
+			}
+		}
+		if (changed) typeNode.getAst().setChanged();
+	}
+
+	@Override
 	public void endVisitLocal(JavacNode localNode, JCVariableDecl local) {
 		applyAlias(localNode, local);
 	}
