@@ -42,8 +42,10 @@ import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
+import com.sun.tools.javac.tree.JCTree.JCExpressionStatement;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
+import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
@@ -95,9 +97,41 @@ public class HandleAlias extends JavacASTAdapter {
 
 	@Override
 	public void endVisitStatement(JavacNode statementNode, JCTree statement) {
-		if (!(statement instanceof JCReturn)) return;
-		JCExpression expr = ((JCReturn) statement).expr;
-		if (expr instanceof JCTypeCast) applyAliasToCast(statementNode, (JCTypeCast) expr);
+		if (statement instanceof JCReturn) {
+			JCExpression expr = ((JCReturn) statement).expr;
+			if (expr instanceof JCTypeCast) {
+				applyAliasToCast(statementNode, (JCTypeCast) expr);
+			} else if (replaceAliasesInExpr(statementNode, expr)) {
+				statementNode.getAst().setChanged();
+			}
+		} else if (statement instanceof JCExpressionStatement) {
+			JCExpression expr = ((JCExpressionStatement) statement).expr;
+			if (replaceAliasesInExpr(statementNode, expr))
+				statementNode.getAst().setChanged();
+		}
+	}
+
+	// Recursively walks an expression tree replacing alias types in JCNewClass
+	// constructor type arguments. Handles method call arguments at any depth,
+	// covering e.g. Mapstruct-generated: setFoo(new ArrayList<AliasType>(list)).
+	private boolean replaceAliasesInExpr(JavacNode node, JCExpression expr) {
+		if (expr == null) return false;
+		boolean changed = false;
+		if (expr instanceof JCNewClass) {
+			JCNewClass nc = (JCNewClass) expr;
+			if (nc.clazz instanceof JCTypeApply) {
+				if (replaceAliasesInTypeArguments(node, (JCTypeApply) nc.clazz))
+					changed = true;
+			}
+			for (JCExpression arg : nc.args) {
+				if (replaceAliasesInExpr(node, arg)) changed = true;
+			}
+		} else if (expr instanceof JCMethodInvocation) {
+			for (JCExpression arg : ((JCMethodInvocation) expr).args) {
+				if (replaceAliasesInExpr(node, arg)) changed = true;
+			}
+		}
+		return changed;
 	}
 
 	@Override
