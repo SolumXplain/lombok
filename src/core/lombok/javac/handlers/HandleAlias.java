@@ -46,7 +46,9 @@ import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCReturn;
 import com.sun.tools.javac.tree.JCTree.JCTypeApply;
+import com.sun.tools.javac.tree.JCTree.JCTypeCast;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
@@ -91,6 +93,13 @@ public class HandleAlias extends JavacASTAdapter {
 	}
 
 	@Override
+	public void endVisitStatement(JavacNode statementNode, JCTree statement) {
+		if (!(statement instanceof JCReturn)) return;
+		JCExpression expr = ((JCReturn) statement).expr;
+		if (expr instanceof JCTypeCast) applyAliasToCast(statementNode, (JCTypeCast) expr);
+	}
+
+	@Override
 	public void endVisitLocal(JavacNode localNode, JCVariableDecl local) {
 		applyAlias(localNode, local);
 	}
@@ -111,6 +120,9 @@ public class HandleAlias extends JavacASTAdapter {
 	}
 
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
+		if (var.init instanceof JCTypeCast)
+			applyAliasToCast(node, (JCTypeCast) var.init);
+
 		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
 		if (typeTree instanceof JCTypeApply) {
@@ -473,6 +485,50 @@ public class HandleAlias extends JavacASTAdapter {
 	private static String stripJavaLang(String fqn) {
 		if (fqn.startsWith("java.lang.") && fqn.indexOf('.', 10) < 0) return fqn.substring(10);
 		return fqn;
+	}
+
+	// -------------------------------------------------------------------------
+	// Cast type replacement
+	// -------------------------------------------------------------------------
+
+	private void applyAliasToCast(JavacNode node, JCTypeCast cast) {
+		if (cast.clazz instanceof JCTypeApply) {
+			if (replaceAliasesInTypeArguments(node, (JCTypeApply) cast.clazz))
+				node.getAst().setChanged();
+			return;
+		}
+		if (!(cast.clazz instanceof JCIdent)) return;
+		String typeName = ((JCIdent) cast.clazz).name.toString();
+		AliasInfo alias = findAlias(node, typeName);
+		if (alias == null) return;
+
+		JavacNode sourceNode = node.getNodeFor(cast.clazz);
+		JavacTreeMaker maker = node.getTreeMaker();
+
+		JCExpression newCastType = chainDotsString(node, alias.ofTypeName);
+		recursiveSetGeneratedBy(newCastType, sourceNode);
+
+		List<JCAnnotation> typeAnnotations = List.nil();
+		for (String annotatedTypeName : alias.annotatedTypeNames) {
+			Set<String> targets = getAnnotationTargets(node, annotatedTypeName);
+			// Only TYPE_USE annotations are valid in cast type position
+			if (!targets.isEmpty() && !targets.contains("TYPE_USE")) continue;
+			JCExpression annTypeExpr = chainDotsString(node, annotatedTypeName);
+			JCAnnotation newAnn = maker.Annotation(annTypeExpr, List.<JCExpression>nil());
+			recursiveSetGeneratedBy(newAnn, sourceNode);
+			typeAnnotations = typeAnnotations.append(newAnn);
+		}
+
+		JCExpression classLit = maker.Select(chainDotsString(node, typeName), node.toName("class"));
+		JCAnnotation typedAnn = maker.Annotation(chainDotsString(node, "lombok.Typed"), List.of(classLit));
+		recursiveSetGeneratedBy(typedAnn, sourceNode);
+		typeAnnotations = typeAnnotations.append(typedAnn);
+
+		JCExpression annotatedType = maker.AnnotatedType(typeAnnotations, newCastType);
+		recursiveSetGeneratedBy(annotatedType, sourceNode);
+
+		cast.clazz = annotatedType;
+		node.getAst().setChanged();
 	}
 
 	// -------------------------------------------------------------------------
