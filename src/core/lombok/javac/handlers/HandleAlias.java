@@ -44,9 +44,11 @@ import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCNewArray;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
+import com.sun.tools.javac.tree.JCTree.JCTypeApply;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.ListBuffer;
 
 /**
  * Handles {@link Alias}: replaces the alias type on local variable declarations, method
@@ -92,6 +94,11 @@ public class HandleAlias extends JavacASTAdapter {
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
 		JCTree typeTree = var.vartype;
 		if (typeTree == null) return;
+		if (typeTree instanceof JCTypeApply) {
+			if (replaceAliasesInTypeArguments(node, (JCTypeApply) typeTree))
+				node.getAst().setChanged();
+			return;
+		}
 		if (!(typeTree instanceof JCIdent)) return;
 		String typeName = ((JCIdent) typeTree).name.toString();
 
@@ -160,6 +167,11 @@ public class HandleAlias extends JavacASTAdapter {
 	private void applyAliasToReturnType(JavacNode methodNode, JCMethodDecl method) {
 		JCExpression restype = method.restype;
 		if (restype == null) return;
+		if (restype instanceof JCTypeApply) {
+			if (replaceAliasesInTypeArguments(methodNode, (JCTypeApply) restype))
+				methodNode.getAst().setChanged();
+			return;
+		}
 		if (!(restype instanceof JCIdent)) return;
 		String typeName = ((JCIdent) restype).name.toString();
 
@@ -442,6 +454,57 @@ public class HandleAlias extends JavacASTAdapter {
 	private static String stripJavaLang(String fqn) {
 		if (fqn.startsWith("java.lang.") && fqn.indexOf('.', 10) < 0) return fqn.substring(10);
 		return fqn;
+	}
+
+	// -------------------------------------------------------------------------
+	// Generic type argument replacement
+	// -------------------------------------------------------------------------
+
+	private boolean replaceAliasesInTypeArguments(JavacNode node, JCTypeApply typeApply) {
+		ListBuffer<JCExpression> newArgs = new ListBuffer<JCExpression>();
+		boolean changed = false;
+		for (JCExpression arg : typeApply.arguments) {
+			JCExpression replacement = replaceAliasInTypeArg(node, arg);
+			newArgs.append(replacement);
+			if (replacement != arg) changed = true;
+		}
+		if (changed) typeApply.arguments = newArgs.toList();
+		return changed;
+	}
+
+	private JCExpression replaceAliasInTypeArg(JavacNode node, JCExpression arg) {
+		if (arg instanceof JCTypeApply) {
+			replaceAliasesInTypeArguments(node, (JCTypeApply) arg);
+			return arg;
+		}
+		if (!(arg instanceof JCIdent)) return arg;
+		String typeName = ((JCIdent) arg).name.toString();
+		AliasInfo alias = findAlias(node, typeName);
+		if (alias == null) return arg;
+
+		JavacTreeMaker maker = node.getTreeMaker();
+		JCExpression newType = chainDotsString(node, alias.ofTypeName);
+		recursiveSetGeneratedBy(newType, node);
+
+		List<JCAnnotation> typeAnnotations = List.nil();
+		for (String annotatedTypeName : alias.annotatedTypeNames) {
+			Set<String> targets = getAnnotationTargets(node, annotatedTypeName);
+			// Only TYPE_USE annotations are valid in type argument position
+			if (!targets.isEmpty() && !targets.contains("TYPE_USE")) continue;
+			JCExpression annTypeExpr = chainDotsString(node, annotatedTypeName);
+			JCAnnotation newAnn = maker.Annotation(annTypeExpr, List.<JCExpression>nil());
+			recursiveSetGeneratedBy(newAnn, node);
+			typeAnnotations = typeAnnotations.append(newAnn);
+		}
+
+		JCExpression classLit = maker.Select(chainDotsString(node, typeName), node.toName("class"));
+		JCAnnotation typedAnn = maker.Annotation(chainDotsString(node, "lombok.Typed"), List.of(classLit));
+		recursiveSetGeneratedBy(typedAnn, node);
+		typeAnnotations = typeAnnotations.append(typedAnn);
+
+		JCExpression result = maker.AnnotatedType(typeAnnotations, newType);
+		recursiveSetGeneratedBy(result, node);
+		return result;
 	}
 
 	private static final class AliasInfo {
