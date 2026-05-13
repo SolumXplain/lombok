@@ -40,6 +40,8 @@ The alias definition can live in the same file, another source file in the same 
 | Explicit type witness on method call | `Collections.<CompanyId>emptyList()` | |
 | Cast in return statement | `return (CompanyId) x` | |
 | Cast in variable initializer | `CompanyId x = (CompanyId) y` | |
+| Cast in assignment RHS | `this.map = (Map<CompanyId, R>) expr` | |
+| Cast as method argument | `consume((CompanyId) obj)` | |
 | Lambda parameter type | `Function<CompanyId, R> f = (CompanyId x) -> ...` | explicit types only; inferred `x -> ...` needs no rewrite |
 
 ### Alias resolution
@@ -64,8 +66,6 @@ Mapstruct generates `*MapperImpl.java` source files that use alias types from th
 |---|---|---|
 | Wildcard bound | `List<? extends CompanyId>` | `JCWildcard.bound` not visited in `replaceAliasInTypeArg` |
 | Array type | `CompanyId[]` | `JCArrayTypeTree` not handled |
-| Cast as method argument | `foo((CompanyId) bar)` | `replaceAliasesInExpr` doesn't recurse into `JCTypeCast` |
-| Assignment RHS | `list = new ArrayList<CompanyId>()` | `replaceAliasesInExpr` doesn't handle `JCAssign` |
 | Conditional (ternary) in init | `CompanyId x = flag ? a() : b()` | `replaceAliasesInExpr` doesn't handle `JCConditional` |
 | Type parameter bound | `<T extends CompanyId> void foo(T t)` | type parameters not visited |
 

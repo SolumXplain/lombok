@@ -111,9 +111,8 @@ public class HandleAlias extends JavacASTAdapter {
 		}
 	}
 
-	// Recursively walks an expression tree replacing alias types in JCNewClass
-	// constructor type arguments. Handles method call arguments at any depth,
-	// covering e.g. Mapstruct-generated: setFoo(new ArrayList<AliasType>(list)).
+	// Recursively walks an expression tree replacing alias types in constructor
+	// type arguments, type casts, and assignment RHS at any depth.
 	// Also handles explicit lambda parameter types: (AliasType x) -> ...
 	private boolean replaceAliasesInExpr(JavacNode node, JCExpression expr) {
 		if (expr == null) return false;
@@ -145,6 +144,13 @@ public class HandleAlias extends JavacASTAdapter {
 			for (JCExpression arg : call.args) {
 				if (replaceAliasesInExpr(node, arg)) changed = true;
 			}
+		} else if (expr instanceof JCAssign) {
+			if (replaceAliasesInExpr(node, ((JCAssign) expr).rhs)) changed = true;
+		} else if (expr instanceof JCTypeCast) {
+			JCTypeCast cast = (JCTypeCast) expr;
+			JCTree origClazz = cast.clazz;
+			applyAliasToCast(node, cast);
+			if (cast.clazz != origClazz) changed = true;
 		} else if (expr.getClass().getName().endsWith("$JCLambda")) {
 			for (JCVariableDecl param : getLambdaParams(expr)) {
 				JCTree origVartype = param.vartype;
