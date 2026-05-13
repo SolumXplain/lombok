@@ -127,7 +127,21 @@ public class HandleAlias extends JavacASTAdapter {
 				if (replaceAliasesInExpr(node, arg)) changed = true;
 			}
 		} else if (expr instanceof JCMethodInvocation) {
-			for (JCExpression arg : ((JCMethodInvocation) expr).args) {
+			JCMethodInvocation call = (JCMethodInvocation) expr;
+			if (call.typeargs != null && call.typeargs.nonEmpty()) {
+				ListBuffer<JCExpression> newTypeArgs = new ListBuffer<JCExpression>();
+				boolean typeArgsChanged = false;
+				for (JCExpression typeArg : call.typeargs) {
+					JCExpression replacement = replaceAliasInTypeArg(node, typeArg);
+					newTypeArgs.append(replacement);
+					if (replacement != typeArg) typeArgsChanged = true;
+				}
+				if (typeArgsChanged) {
+					call.typeargs = newTypeArgs.toList();
+					changed = true;
+				}
+			}
+			for (JCExpression arg : call.args) {
 				if (replaceAliasesInExpr(node, arg)) changed = true;
 			}
 		}
@@ -155,14 +169,10 @@ public class HandleAlias extends JavacASTAdapter {
 	}
 
 	private void applyAlias(JavacNode node, JCVariableDecl var) {
-		if (var.init instanceof JCTypeCast)
+		if (var.init instanceof JCTypeCast) {
 			applyAliasToCast(node, (JCTypeCast) var.init);
-		if (var.init instanceof JCNewClass) {
-			JCExpression clazz = ((JCNewClass) var.init).clazz;
-			if (clazz instanceof JCTypeApply) {
-				if (replaceAliasesInTypeArguments(node, (JCTypeApply) clazz))
-					node.getAst().setChanged();
-			}
+		} else if (replaceAliasesInExpr(node, var.init)) {
+			node.getAst().setChanged();
 		}
 
 		JCTree typeTree = var.vartype;

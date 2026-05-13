@@ -1,5 +1,6 @@
 import lombok.Alias;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AliasGenericConstructor {
@@ -23,6 +24,16 @@ public class AliasGenericConstructor {
         if (list != null) {
             setSectors(new ArrayList<Sector>(list));
         }
+    }
+
+    // Explicit type witness on a method call: Collections.<Sector>emptyList()
+    public void typeWitnessAsArg() {
+        consume(Collections.<Sector>emptyList());
+    }
+
+    // Explicit type witness on a variable initializer
+    public void typeWitnessInit() {
+        List<Sector> list = Collections.<Sector>emptyList();
     }
 
     private List<Sector> getSectors() { return null; }
