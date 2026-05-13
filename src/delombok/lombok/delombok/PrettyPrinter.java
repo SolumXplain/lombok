@@ -1844,7 +1844,15 @@ public class PrettyPrinter extends JCTree.Visitor {
 			for (JCVariableDecl vd : params) {
 				if (!first) print(", ");
 				first = false;
-				printVarDefInline(vd);
+				printAnnotations(vd.mods.annotations, false);
+				printModifierKeywords(vd.mods);
+				// printVarDef0 falls back to "var" when pos==-1, which incorrectly
+				// fires for Lombok-generated type nodes. Explicit lambda params always
+				// have a real type, so print vartype directly (null → "var" is the only
+				// valid fallback here; Java 11 `(var x)->` uses paramKind==VAR, not EXPLICIT).
+				if (vd.vartype == null) print("var"); else print(vd.vartype);
+				print(" ");
+				print(vd.name);
 			}
 		} else {
 			String sep = "";
