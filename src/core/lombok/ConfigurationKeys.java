@@ -751,6 +751,20 @@ public class ConfigurationKeys {
 	public static final ConfigurationKey<List<JacksonVersion>> JACKSONIZED_JACKSON_VERSION = new ConfigurationKey<List<JacksonVersion>>("lombok.jacksonized.jacksonVersion", "The jackson major version(s) to generate (default: 2 + warning)") {};
 
 
+	// ----- Alias -----
+
+	/**
+	 * lombok configuration: {@code lombok.alias.enabled} = {@code true} | {@code false}.
+	 *
+	 * If set to {@code false}, the {@code @Alias} handler is bypassed entirely: alias types are left
+	 * as-is in the compiled output and no replacement or annotation injection occurs.  Useful when you
+	 * want to ship alias type declarations without activating the transformation (e.g. for testing or
+	 * in modules that consume the alias class but should not expand it).
+	 *
+	 * Default: {@code true} (handler is active).
+	 */
+	public static final ConfigurationKey<Boolean> ALIAS_ENABLED = new ConfigurationKey<Boolean>("lombok.alias.enabled", "If false, the @Alias handler is skipped and alias types are left unexpanded (default: true).") {};
+
 	// ----- Configuration System -----
 
 	/**

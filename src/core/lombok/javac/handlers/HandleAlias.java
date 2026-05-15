@@ -20,6 +20,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
 import lombok.Alias;
+import lombok.ConfigurationKeys;
 import lombok.core.AST.Kind;
 import lombok.core.HandlerPriority;
 import lombok.core.ImportList;
@@ -79,8 +80,14 @@ public class HandleAlias extends JavacASTAdapter {
 	private static final WeakHashMap<Context, Map<String, AliasInfo>> CROSS_UNIT_REGISTRY =
 			new WeakHashMap<Context, Map<String, AliasInfo>>();
 
+	private static boolean isDisabled(JavacNode node) {
+		if ("false".equalsIgnoreCase(System.getProperty("lombok.alias.enabled"))) return true;
+		return Boolean.FALSE.equals(node.getAst().readConfiguration(ConfigurationKeys.ALIAS_ENABLED));
+	}
+
 	@Override
 	public void endVisitType(JavacNode typeNode, JCClassDecl type) {
+    if (isDisabled(typeNode)) return;
     try {
       boolean changed = false;
       Tree extendsClause = ((ClassTree) type).getExtendsClause();
@@ -104,6 +111,7 @@ public class HandleAlias extends JavacASTAdapter {
 
 	@Override
 	public void endVisitStatement(JavacNode statementNode, JCTree statement) {
+    if (isDisabled(statementNode)) return;
     try {
       if (statement instanceof JCReturn) {
         JCExpression expr = ((JCReturn) statement).expr;
@@ -191,21 +199,25 @@ public class HandleAlias extends JavacASTAdapter {
 
 	@Override
 	public void endVisitLocal(JavacNode localNode, JCVariableDecl local) {
+		if (isDisabled(localNode)) return;
 		applyAlias(localNode, local);
 	}
 
 	@Override
 	public void endVisitMethodArgument(JavacNode argNode, JCVariableDecl arg, JCMethodDecl method) {
+		if (isDisabled(argNode)) return;
 		applyAlias(argNode, arg);
 	}
 
 	@Override
 	public void endVisitField(JavacNode fieldNode, JCVariableDecl field) {
+		if (isDisabled(fieldNode)) return;
 		applyAlias(fieldNode, field);
 	}
 
 	@Override
 	public void endVisitMethod(JavacNode methodNode, JCMethodDecl method) {
+		if (isDisabled(methodNode)) return;
 		applyAliasToReturnType(methodNode, method);
 	}
 
