@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="libraryTable">
+  <library name="test libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/test/junit-junit.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/log4j-log4j.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/org.apache.logging.log4j-log4j-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/commons-logging-commons-logging.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/org.slf4j-slf4j-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/org.slf4j-slf4j-ext.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/org.jboss.logging-jboss-logging.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/com.google.flogger-flogger.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/com.google.guava-guava.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/com.google.code.findbugs-findbugs.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/org.springframework-spring-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/com.fasterxml.jackson.core-jackson-databind.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/com.fasterxml.jackson.core-jackson-annotations.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/test/com.google.code.findbugs-jsr305.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/sources/junit-junit.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/log4j-log4j.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/org.apache.logging.log4j-log4j-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/commons-logging-commons-logging.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/org.slf4j-slf4j-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/org.slf4j-slf4j-ext.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/org.jboss.logging-jboss-logging.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/com.google.flogger-flogger.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sources/com.google.guava-guava.jar!/" />
+    </SOURCES>
+  </library>
+</component>
