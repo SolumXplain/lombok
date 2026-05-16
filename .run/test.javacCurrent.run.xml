@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="test.javacCurrent" type="AntRunConfiguration">
+    <antsettings antfile="file://$PROJECT_DIR$/build.xml" target="test.javacCurrent" />
+    <method v="2" />
+  </configuration>
+</component>
