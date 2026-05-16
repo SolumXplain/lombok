@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="libraryTable">
+  <library name="buildtools libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/com.hierynomus-sshj.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/projectlombok.org-markdownj.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/de.java2html-java2html.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.freemarker-freemarker.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/com.sparkjava-spark-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-s3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/com.sun.xml.bind-jaxb-impl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.bouncycastle-bcprov-jdk15on.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.bouncycastle-bcpkix-jdk15on.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/com.jcraft-jzlib.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/net.i2p.crypto-eddsa.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-server.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-webapp.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty.websocket-websocket-server.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty.websocket-websocket-servlet.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/javax.servlet-javax.servlet-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-http.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-io.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-util.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-xml.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-servlet.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-security.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty.websocket-websocket-common.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty.websocket-websocket-client.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty.websocket-websocket-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.eclipse.jetty-jetty-client.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-aws-xml-protocol.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-protocol-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-arns.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-profiles.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-sdk-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-auth.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-http-client-spi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-regions.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-annotations.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-utils.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-aws-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-metrics-spi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-json-utils.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-endpoints-spi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-aws-query-protocol.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.slf4j-slf4j-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.reactivestreams-reactive-streams.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.eventstream-eventstream.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-third-party-jackson-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-apache-client.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/software.amazon.awssdk-netty-nio-client.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.apache.httpcomponents-httpclient.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/org.apache.httpcomponents-httpcore.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/commons-codec-commons-codec.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-codec-http.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-codec-http2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-codec.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-transport.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-common.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-buffer.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-handler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-transport-classes-epoll.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-resolver.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/io.netty-netty-transport-native-unix-common.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/jakarta.xml.bind-jakarta.xml.bind-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/buildtools/com.sun.activation-jakarta.activation.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+    </SOURCES>
+  </library>
+</component>
