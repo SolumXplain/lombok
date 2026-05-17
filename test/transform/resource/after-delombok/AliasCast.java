@@ -39,4 +39,13 @@ public class AliasCast {
 
     private void consume(@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String s) {
     }
+
+    // Cast inside an intermediate call of a method chain on a return statement
+    public String testReturnMethodChainCast(Object obj, Object other) {
+        return wrap((@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String) obj).concat(other.toString());
+    }
+
+    private String wrap(@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String s) {
+        return "";
+    }
 }

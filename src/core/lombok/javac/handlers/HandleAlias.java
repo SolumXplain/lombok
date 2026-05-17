@@ -128,6 +128,10 @@ public class HandleAlias extends JavacASTAdapter {
 			}
 		} else if (expr instanceof JCMethodInvocation) {
 			JCMethodInvocation call = (JCMethodInvocation) expr;
+			// Recurse into the receiver of chained calls (e.g. a.b((Alias)x).c() → recurse into a.b(...))
+			if (call.meth instanceof JCFieldAccess) {
+				if (replaceAliasesInExpr(node, ((JCFieldAccess) call.meth).selected)) changed = true;
+			}
 			if (call.typeargs != null && call.typeargs.nonEmpty()) {
 				ListBuffer<JCExpression> newTypeArgs = new ListBuffer<JCExpression>();
 				boolean typeArgsChanged = false;
