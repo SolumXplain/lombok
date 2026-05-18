@@ -35,7 +35,7 @@ public class AliasCast {
 
     // Cast inside an intermediate call of a method chain on a return statement
     public String testReturnMethodChainCast(Object obj, Object other) {
-        return wrap((Sector) obj).concat(other.toString());
+        return wrap((Sector) obj).concat(((Sector)other).toString());
     }
 
     private String wrap(Sector s) { return ""; }

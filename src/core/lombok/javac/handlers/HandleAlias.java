@@ -51,6 +51,7 @@ import com.sun.tools.javac.tree.JCTree.JCNewClass;
 import com.sun.tools.javac.tree.JCTree.JCMethodDecl;
 import com.sun.tools.javac.tree.JCTree.JCReturn;
 import com.sun.tools.javac.tree.JCTree.JCTypeApply;
+import com.sun.tools.javac.tree.JCTree.JCParens;
 import com.sun.tools.javac.tree.JCTree.JCTypeCast;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.Context;
@@ -80,36 +81,48 @@ public class HandleAlias extends JavacASTAdapter {
 
 	@Override
 	public void endVisitType(JavacNode typeNode, JCClassDecl type) {
-		boolean changed = false;
-		Tree extendsClause = ((ClassTree) type).getExtendsClause();
-		if (extendsClause instanceof JCTypeApply) {
-			if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) extendsClause))
-				changed = true;
-		}
-		for (Tree iface : ((ClassTree) type).getImplementsClause()) {
-			if (iface instanceof JCTypeApply) {
-				if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) iface))
-					changed = true;
-			}
-		}
-		if (changed) typeNode.getAst().setChanged();
-	}
+    try {
+      boolean changed = false;
+      Tree extendsClause = ((ClassTree) type).getExtendsClause();
+      if (extendsClause instanceof JCTypeApply) {
+        if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) extendsClause))
+          changed = true;
+      }
+      for (Tree iface : ((ClassTree) type).getImplementsClause()) {
+        if (iface instanceof JCTypeApply) {
+          if (replaceAliasesInTypeArguments(typeNode, (JCTypeApply) iface))
+            changed = true;
+        }
+      }
+      if (changed) typeNode.getAst().setChanged();
+    } catch (Exception e) {
+      System.err.println("Error while processing " + typeNode.get() + ": " + e.getMessage());
+			e.printStackTrace();
+			throw new RuntimeException(e);
+    }
+  }
 
 	@Override
 	public void endVisitStatement(JavacNode statementNode, JCTree statement) {
-		if (statement instanceof JCReturn) {
-			JCExpression expr = ((JCReturn) statement).expr;
-			if (expr instanceof JCTypeCast) {
-				applyAliasToCast(statementNode, (JCTypeCast) expr);
-			} else if (replaceAliasesInExpr(statementNode, expr)) {
-				statementNode.getAst().setChanged();
-			}
-		} else if (statement instanceof JCExpressionStatement) {
-			JCExpression expr = ((JCExpressionStatement) statement).expr;
-			if (replaceAliasesInExpr(statementNode, expr))
-				statementNode.getAst().setChanged();
-		}
-	}
+    try {
+      if (statement instanceof JCReturn) {
+        JCExpression expr = ((JCReturn) statement).expr;
+        if (expr instanceof JCTypeCast) {
+          applyAliasToCast(statementNode, (JCTypeCast) expr);
+        } else if (replaceAliasesInExpr(statementNode, expr)) {
+          statementNode.getAst().setChanged();
+        }
+      } else if (statement instanceof JCExpressionStatement) {
+        JCExpression expr = ((JCExpressionStatement) statement).expr;
+        if (replaceAliasesInExpr(statementNode, expr))
+          statementNode.getAst().setChanged();
+      }
+    } catch (Exception e) {
+			System.err.println("Error while processing " + statementNode.get() + ": " + e.getMessage());
+			e.printStackTrace();
+			throw new RuntimeException(e);
+    }
+  }
 
 	// Recursively walks an expression tree replacing alias types in constructor
 	// type arguments, type casts, and assignment RHS at any depth.
@@ -150,6 +163,8 @@ public class HandleAlias extends JavacASTAdapter {
 			}
 		} else if (expr instanceof JCAssign) {
 			if (replaceAliasesInExpr(node, ((JCAssign) expr).rhs)) changed = true;
+		} else if (expr instanceof JCParens) {
+			if (replaceAliasesInExpr(node, ((JCParens) expr).expr)) changed = true;
 		} else if (expr instanceof JCTypeCast) {
 			JCTypeCast cast = (JCTypeCast) expr;
 			JCTree origClazz = cast.clazz;

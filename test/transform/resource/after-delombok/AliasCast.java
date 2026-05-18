@@ -42,7 +42,7 @@ public class AliasCast {
 
     // Cast inside an intermediate call of a method chain on a return statement
     public String testReturnMethodChainCast(Object obj, Object other) {
-        return wrap((@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String) obj).concat(other.toString());
+        return wrap((@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String) obj).concat(((@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String) other).toString());
     }
 
     private String wrap(@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String s) {
