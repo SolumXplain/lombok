@@ -39,4 +39,10 @@ public class AliasGeneric {
     public void typeOnLambdaArg() {
         Function<List<Sector>, Integer> lambda = (List<Sector> sectors) -> sectors.size();
     }
+
+    public void typeOnLambdaInMethodArg() {
+        Collections.<List<Sector>>emptyList().forEach((List<Sector> c) -> {
+            System.out.println(c);
+        });
+    }
 }

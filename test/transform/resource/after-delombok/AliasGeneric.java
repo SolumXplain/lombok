@@ -41,4 +41,10 @@ public class AliasGeneric {
     public void typeOnLambdaArg() {
         Function<List<@lombok.Typed(Sector.class) String>, Integer> lambda = (List<@lombok.Typed(Sector.class) String> sectors) -> sectors.size();
     }
+
+    public void typeOnLambdaInMethodArg() {
+        Collections.<List<@lombok.Typed(Sector.class) String>>emptyList().forEach((List<@lombok.Typed(Sector.class) String> c) -> {
+            System.out.println(c);
+        });
+    }
 }
