@@ -3,6 +3,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class AliasGeneric {
     @Alias(of = String.class, annotated = org.jspecify.annotations.Nullable.class)
@@ -25,5 +26,9 @@ public class AliasGeneric {
 
     public void typeWitnessNested() {
         Map<String, Optional<Sector>> m = Collections.<String, Optional<Sector>>emptyMap();
+    }
+
+    public void typeWitnessNestedInLambda() {
+        Function<String, Map<String, Optional<Sector>>> lambda = it -> Collections.<String, Optional<Sector>>emptyMap();
     }
 }
