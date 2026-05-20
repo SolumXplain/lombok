@@ -184,6 +184,12 @@ public class HandleAlias extends JavacASTAdapter {
 				applyAlias(node, param);
 				if (param.vartype != origVartype) changed = true;
 			}
+			// Expression-bodied lambdas (it -> someExpr) are not visited as statements,
+			// so recurse into the body here. Block bodies are walked via endVisitStatement.
+			JCTree body = getLambdaBody(expr);
+			if (body instanceof JCExpression) {
+				if (replaceAliasesInExpr(node, (JCExpression) body)) changed = true;
+			}
 		}
 		return changed;
 	}
@@ -194,6 +200,14 @@ public class HandleAlias extends JavacASTAdapter {
 			return (List<JCVariableDecl>) Permit.getField(expr.getClass(), "params").get(expr);
 		} catch (Exception e) {
 			return List.<JCVariableDecl>nil();
+		}
+	}
+
+	private static JCTree getLambdaBody(JCExpression expr) {
+		try {
+			return (JCTree) Permit.getField(expr.getClass(), "body").get(expr);
+		} catch (Exception e) {
+			return null;
 		}
 	}
 
