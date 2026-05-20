@@ -31,4 +31,12 @@ public class AliasGeneric {
     public void typeWitnessNestedInLambda() {
         Function<String, Map<String, Optional<Sector>>> lambda = it -> Collections.<String, Optional<Sector>>emptyMap();
     }
+
+    public void typeAsLambdaParam() {
+        var lambda = (Function<String, Optional<Sector>>) (it) -> Optional.empty();
+    }
+
+    public void typeOnLambdaArg() {
+        Function<List<Sector>, Integer> lambda = (List<Sector> sectors) -> sectors.size();
+    }
 }

@@ -33,4 +33,12 @@ public class AliasGeneric {
     public void typeWitnessNestedInLambda() {
         Function<String, Map<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>> lambda = it -> Collections.<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>emptyMap();
     }
+
+    public void typeAsLambdaParam() {
+        var lambda = (Function<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>) it -> Optional.empty();
+    }
+
+    public void typeOnLambdaArg() {
+        Function<List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>, Integer> lambda = (List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String> sectors) -> sectors.size();
+    }
 }
