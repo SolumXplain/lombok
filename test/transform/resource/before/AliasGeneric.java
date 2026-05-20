@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public class AliasGeneric {
-    @Alias(of = String.class, annotated = org.jspecify.annotations.Nullable.class)
+    @Alias(of = String.class)
     interface Sector {}
 
     private List<Sector> sectors;

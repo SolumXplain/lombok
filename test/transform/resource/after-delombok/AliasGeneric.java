@@ -7,38 +7,38 @@ import java.util.function.Function;
 
 public class AliasGeneric {
 
-    @Alias(of = String.class, annotated = org.jspecify.annotations.Nullable.class)
+    @Alias(of = String.class)
     interface Sector {
     }
 
-    private List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String> sectors;
+    private List<@lombok.Typed(Sector.class) String> sectors;
 
-    public List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String> getSectors() {
+    public List<@lombok.Typed(Sector.class) String> getSectors() {
         return sectors;
     }
 
-    public void process(List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String> codes) {
+    public void process(List<@lombok.Typed(Sector.class) String> codes) {
         System.out.println(codes);
     }
 
     public void test() {
-        List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String> list = new java.util.ArrayList<>();
-        Map<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String, Integer> counts = new java.util.HashMap<>();
+        List<@lombok.Typed(Sector.class) String> list = new java.util.ArrayList<>();
+        Map<@lombok.Typed(Sector.class) String, Integer> counts = new java.util.HashMap<>();
     }
 
     public void typeWitnessNested() {
-        Map<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>> m = Collections.<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>emptyMap();
+        Map<String, Optional<@lombok.Typed(Sector.class) String>> m = Collections.<String, Optional<@lombok.Typed(Sector.class) String>>emptyMap();
     }
 
     public void typeWitnessNestedInLambda() {
-        Function<String, Map<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>> lambda = it -> Collections.<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>emptyMap();
+        Function<String, Map<String, Optional<@lombok.Typed(Sector.class) String>>> lambda = it -> Collections.<String, Optional<@lombok.Typed(Sector.class) String>>emptyMap();
     }
 
     public void typeAsLambdaParam() {
-        var lambda = (Function<String, Optional<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>>) it -> Optional.empty();
+        var lambda = (Function<String, Optional<@lombok.Typed(Sector.class) String>>) it -> Optional.empty();
     }
 
     public void typeOnLambdaArg() {
-        Function<List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String>, Integer> lambda = (List<@org.jspecify.annotations.Nullable @lombok.Typed(Sector.class) String> sectors) -> sectors.size();
+        Function<List<@lombok.Typed(Sector.class) String>, Integer> lambda = (List<@lombok.Typed(Sector.class) String> sectors) -> sectors.size();
     }
 }
