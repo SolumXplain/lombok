@@ -21,6 +21,7 @@ public class AliasGeneric {
 
     public void test() {
         List<Sector> list = new java.util.ArrayList<>();
+        List<List<Sector>> chunked = Collections.<List<Sector>>emptyList();
         Map<Sector, Integer> counts = new java.util.HashMap<>();
     }
 

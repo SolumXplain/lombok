@@ -23,6 +23,7 @@ public class AliasGeneric {
 
     public void test() {
         List<@lombok.Typed(Sector.class) String> list = new java.util.ArrayList<>();
+        List<List<@lombok.Typed(Sector.class) String>> chunked = Collections.<List<@lombok.Typed(Sector.class) String>>emptyList();
         Map<@lombok.Typed(Sector.class) String, Integer> counts = new java.util.HashMap<>();
     }
 
