@@ -412,6 +412,14 @@ public class ConfigurationKeys {
 	 */
 	public static final ConfigurationKey<List<PackageName>> NULL_MARKED_PACKAGES = new ConfigurationKey<List<PackageName>>("lombok.nullSafePackages", "Treat classes within these packages as if they had @NullMarked on each class") {};
 
+	/**
+	 * lombok configuration: {@code lombok.nullSafeModuleRoots} += &lt;TypeName: module name&gt;.
+	 * <p>
+	 * All classes in packages rooted at these module names are treated as if they have {@code @NullMarked}.
+	 * Unlike {@code lombok.nullSafePackages}, this covers all subpackages.
+	 * If a module-info.java file is found with {@code @NullMarked}, that module will automatically be recognised.
+	 */
+	public static final ConfigurationKey<List<PackageName>> NULL_MARKED_MODULE_ROOTS = new ConfigurationKey<List<PackageName>>("lombok.nullSafeModuleRoots", "Treat all classes in packages rooted at these module names as if they had @NullMarked (covers all subpackages)") {};
 
 	// ----- SneakyThrows -----
 

@@ -27,15 +27,22 @@ import static lombok.javac.Javac.*;
 import static lombok.javac.JavacAugments.JCTree_generatedNode;
 import static lombok.javac.JavacAugments.JCTree_keepPosition;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.sun.source.tree.TreeVisitor;
@@ -125,16 +132,81 @@ public class JavacHandlerUtil {
 		return hasAnnotation("org.jspecify.annotations.Nullable", fieldNode);
 	}
 
+	private static final Pattern MODULE_DECL = Pattern.compile("\\bmodule\\s+([\\w.]+)\\s*\\{");
+	private static final ConcurrentHashMap<String, String> moduleNameCache = new ConcurrentHashMap<String, String>();
+
 	/**
 	 * Return true if the specified field or parameter node is determined as non-null according
 	 * to JSpecify rules, but does not account for @NullUnmarked complexity.
 	 */
 	static boolean isNullMarked(JavacNode typeNode) {
 		if (hasAnnotation("org.jspecify.annotations.NullMarked", typeNode)) return true;
-		java.util.List<PackageName> nullMarkedPackages = typeNode.getAst().readConfiguration(ConfigurationKeys.NULL_MARKED_PACKAGES);
 		PackageName packageName = PackageName.valueOf(typeNode.getPackageDeclaration());
-    return nullMarkedPackages.contains(packageName);
-  }
+		if (packageName == null) return false;
+
+		java.util.List<PackageName> nullMarkedPackages = typeNode.getAst().readConfiguration(ConfigurationKeys.NULL_MARKED_PACKAGES);
+		if (nullMarkedPackages.contains(packageName)) return true;
+
+		java.util.List<PackageName> moduleRoots = typeNode.getAst().readConfiguration(ConfigurationKeys.NULL_MARKED_MODULE_ROOTS);
+		if (isInNullMarkedModule(packageName, moduleRoots)) return true;
+
+		// Direct filesystem fallback: the config resolver may be overridden (e.g., in tests),
+		// so we also check for module-info.java on the real filesystem.
+		return isNullMarkedByModuleInfo(typeNode.getAst().getAbsoluteFileLocation(), packageName);
+	}
+
+	private static boolean isInNullMarkedModule(PackageName packageName, java.util.List<PackageName> moduleRoots) {
+		String pkg = packageName.getName();
+		for (PackageName root : moduleRoots) {
+			String r = root.getName();
+			if (pkg.equals(r) || pkg.startsWith(r + ".")) return true;
+		}
+		return false;
+	}
+
+	private static boolean isNullMarkedByModuleInfo(URI sourceLocation, PackageName packageName) {
+		if (sourceLocation == null || !"file".equals(sourceLocation.getScheme())) return false;
+		try {
+			File dir = new File(sourceLocation).getParentFile();
+			while (dir != null) {
+				File moduleInfo = new File(dir, "module-info.java");
+				if (moduleInfo.isFile()) {
+					String cacheKey = moduleInfo.getCanonicalPath() + "@" + moduleInfo.lastModified();
+					String moduleName = moduleNameCache.get(cacheKey);
+					if (moduleName == null) {
+						moduleName = readModuleName(moduleInfo);
+						moduleNameCache.put(cacheKey, moduleName);
+					}
+					if (moduleName.isEmpty()) return false;
+					String pkg = packageName.getName();
+					return pkg.equals(moduleName) || pkg.startsWith(moduleName + ".");
+				}
+				if (new File(dir, "lombok.config").isFile()) break;
+				dir = dir.getParentFile();
+			}
+		} catch (Exception ignored) {}
+		return false;
+	}
+
+	private static String readModuleName(File moduleInfo) {
+		try {
+			FileInputStream fis = new FileInputStream(moduleInfo);
+			try {
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				byte[] buf = new byte[4096];
+				int r;
+				while ((r = fis.read(buf)) != -1) out.write(buf, 0, r);
+				String content = new String(out.toByteArray(), "UTF-8");
+				if (!content.contains("NullMarked")) return "";
+				Matcher m = MODULE_DECL.matcher(content);
+				return m.find() ? m.group(1) : "";
+			} finally {
+				fis.close();
+			}
+		} catch (IOException e) {
+			return "";
+		}
+	}
 
 	/**
 	 * Find the parent class or interface

@@ -52,15 +52,16 @@ public class TestConfiguration {
 	@Test
 	public void moduleInfoShouldBeDetected() {
 		URI uri = new File("test/transform/resource/before/nullmarkedmodule/NullMarkedModule.java").toURI();
-		List<PackageName> packages = LombokConfiguration.read(NULL_MARKED_PACKAGES, uri);
-		assertTrue("@NullMarked on module-info.java should mark the module's packages as null-safe", packages.contains(PackageName.valueOf("nullmarkedmodule")));
+		List<PackageName> roots = LombokConfiguration.read(NULL_MARKED_MODULE_ROOTS, uri);
+		assertTrue("@NullMarked on module-info.java should detect the module root", roots.contains(PackageName.valueOf("nullmarkedmodule")));
 	}
 
 	@Test
 	public void moduleInfoShouldBeDetectedForSubpackage() {
+		// The same module root should bubble up when resolving config for a source file in a subpackage
 		URI uri = new File("test/transform/resource/before/nullmarkedmodule/sub/NullMarkedModuleSub.java").toURI();
-		List<PackageName> packages = LombokConfiguration.read(NULL_MARKED_PACKAGES, uri);
-		assertTrue("@NullMarked on module-info.java should cover subpackages", packages.contains(PackageName.valueOf("nullmarkedmodule.sub")));
+		List<PackageName> roots = LombokConfiguration.read(NULL_MARKED_MODULE_ROOTS, uri);
+		assertTrue("@NullMarked on module-info.java in parent dir should bubble up to subpackages", roots.contains(PackageName.valueOf("nullmarkedmodule")));
 	}
 
 	@Test
