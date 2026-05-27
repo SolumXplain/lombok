@@ -92,9 +92,9 @@ public class DirectoryRunner extends Runner {
 
 	private static final FileFilter JAVA_FILE_FILTER = new FileFilter() {
 		@Override public boolean accept(File file) {
-			// Always omit package-info.java from tests because it's only there to control local tests
-			// (for now), and Lombok currently doesn't copy package annotations across
-			if (!file.isFile() || !file.getName().endsWith(".java") || file.getName().endsWith("package-info.java")) return false;
+			// Always omit package-info.java and module-info.java from tests: they're only there to
+			// provide context for the test compilation, not to be tested themselves
+			if (!file.isFile() || !file.getName().endsWith(".java") || file.getName().endsWith("package-info.java") || file.getName().endsWith("module-info.java")) return false;
 			boolean positiveFilter = false;
 			for (String dfof : DEBUG_FOCUS_ON_FILE) {
 				if (dfof.isEmpty()) continue;

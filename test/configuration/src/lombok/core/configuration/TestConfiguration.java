@@ -23,6 +23,7 @@ package lombok.core.configuration;
 
 import static lombok.ConfigurationKeys.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -46,6 +47,20 @@ public class TestConfiguration {
 		List<PackageName> packages = LombokConfiguration.read(NULL_MARKED_PACKAGES, uri);
 		assertEquals(1, packages.size());
 		assertEquals("nullmarked", packages.get(0).getName());
+	}
+
+	@Test
+	public void moduleInfoShouldBeDetected() {
+		URI uri = new File("test/transform/resource/before/nullmarkedmodule/NullMarkedModule.java").toURI();
+		List<PackageName> packages = LombokConfiguration.read(NULL_MARKED_PACKAGES, uri);
+		assertTrue("@NullMarked on module-info.java should mark the module's packages as null-safe", packages.contains(PackageName.valueOf("nullmarkedmodule")));
+	}
+
+	@Test
+	public void moduleInfoShouldBeDetectedForSubpackage() {
+		URI uri = new File("test/transform/resource/before/nullmarkedmodule/sub/NullMarkedModuleSub.java").toURI();
+		List<PackageName> packages = LombokConfiguration.read(NULL_MARKED_PACKAGES, uri);
+		assertTrue("@NullMarked on module-info.java should cover subpackages", packages.contains(PackageName.valueOf("nullmarkedmodule.sub")));
 	}
 
 	@Test

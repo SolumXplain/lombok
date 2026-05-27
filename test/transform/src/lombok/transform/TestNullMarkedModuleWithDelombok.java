@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 The Project Lombok Authors.
+ * Copyright (C) 2009-2026 The Project Lombok Authors.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,13 +19,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package lombok;
+package lombok.transform;
+
+import java.io.File;
+
+import lombok.DirectoryRunner;
 
 import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
 
-@RunWith(Suite.class)
-@SuiteClasses({lombok.bytecode.RunBytecodeTests.class, lombok.transform.TestLombokFilesIdempotent.class, lombok.transform.TestSourceFiles.class, lombok.transform.TestWithDelombok.class, lombok.transform.TestNullMarkedWithDelombok.class, lombok.transform.TestNullUnmarkedSubpackageWithDelombok.class, lombok.transform.TestNullMarkedModuleWithDelombok.class, lombok.transform.TestNullMarkedModuleSubWithDelombok.class})
-public class TestJavac {
+@RunWith(DirectoryRunner.class)
+public class TestNullMarkedModuleWithDelombok extends DirectoryRunner.TestParams {
+	@Override
+	public DirectoryRunner.Compiler getCompiler() {
+		return DirectoryRunner.Compiler.DELOMBOK;
+	}
+
+	@Override
+	public boolean printErrors() {
+		return true;
+	}
+
+	@Override
+	public File getBeforeDirectory() {
+		return new File("test/transform/resource/before/nullmarkedmodule");
+	}
+
+	@Override
+	public File getAfterDirectory() {
+		return new File("test/transform/resource/after-delombok/nullmarkedmodule");
+	}
+
+	@Override
+	public File getMessagesDirectory() {
+		return new File("test/transform/resource/messages-delombok");
+	}
+
+	@Override
+	public boolean expectChanges() {
+		return true;
+	}
+
+	@Override public String testNamePrefix() {
+		return "javac-";
+	}
 }
