@@ -55,13 +55,16 @@ import com.sun.tools.javac.code.Type.ErrorType;
 import com.sun.tools.javac.code.Type.ForAll;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Types;
+import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCAnnotation;
+import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCIdent;
 import com.sun.tools.javac.tree.JCTree.JCMethodInvocation;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 
 /**
  * Handles the {@link ExtensionMethod} annotation for javac.
@@ -205,6 +208,7 @@ public class HandleExtensionMethod extends JavacAnnotationHandler<ExtensionMetho
 			if (sym instanceof ClassSymbol) return;
 			
 			Types types = Types.instance(annotationNode.getContext());
+			Symbol receiverTyped = typedTarget(findVarDecl(sym));
 			for (Extension extension : extensions) {
 				TypeSymbol extensionProvider = extension.extensionProvider;
 				if (surroundingTypeSymbol == extensionProvider) continue;
@@ -214,6 +218,11 @@ public class HandleExtensionMethod extends JavacAnnotationHandler<ExtensionMetho
 					if (!MethodType.class.isInstance(extensionMethodType) && !ForAll.class.isInstance(extensionMethodType)) continue;
 					Type firstArgType = types.erasure(extensionMethodType.asMethodType().argtypes.get(0));
 					if (!types.isAssignable(receiverType, firstArgType)) continue;
+					// When both the receiver and the extension method's first parameter carry a @Typed
+					// discriminator, they must agree; this lets @Typed pick between otherwise-identical
+					// candidates (same name, same erased first argument type).
+					Symbol methodTyped = typedTarget(findVarDecl(extensionMethod.params().get(0)));
+					if (receiverTyped != null && methodTyped != null && receiverTyped != methodTyped) continue;
 					methodCall.args = methodCall.args.prepend(receiver);
 					methodCall.meth = chainDotsString(annotationNode, extensionProvider.toString() + "." + methodName);
 					recursiveSetGeneratedBy(methodCall.meth, methodCallNode);
@@ -222,6 +231,53 @@ public class HandleExtensionMethod extends JavacAnnotationHandler<ExtensionMetho
 			}
 		}
 		
+		/**
+		 * Finds the source declaration of the given symbol within the current compilation unit, or
+		 * {@code null} if it is not declared here (for example, an extension method living in another
+		 * source file). {@code @Typed} is a {@code TYPE_USE} annotation, and the type-annotation API
+		 * needed to read it from a resolved symbol only exists in javac8+, so we read it from the
+		 * original AST instead.
+		 */
+		private JCVariableDecl findVarDecl(final Symbol symbol) {
+			if (symbol == null) return null;
+			final JCVariableDecl[] result = new JCVariableDecl[1];
+			annotationNode.getAst().top().get().accept(new TreeScanner<Void, Void>() {
+				@Override public Void visitVariable(VariableTree node, Void p) {
+					if (result[0] == null && ((JCVariableDecl) node).sym == symbol) result[0] = (JCVariableDecl) node;
+					return super.visitVariable(node, p);
+				}
+			}, null);
+			return result[0];
+		}
+
+		/**
+		 * Returns the type referenced by a {@code @lombok.Typed(SomeType.class)} annotation on the given
+		 * declaration, or {@code null} if there is none. Used to discriminate between extension methods
+		 * whose signatures are otherwise indistinguishable (same name, same erased first argument type).
+		 */
+		private Symbol typedTarget(final JCVariableDecl varDecl) {
+			if (varDecl == null || varDecl.mods == null) return null;
+			JavacNode declNode = annotationNode.getAst().get(varDecl);
+			if (declNode == null) return null;
+			JavacNode typeNode = upToTypeNode(declNode);
+			for (JCAnnotation annotation : varDecl.mods.annotations) {
+				if (!isTypedAnnotation(annotation)) continue;
+				JCExpression value = annotation.args.isEmpty() ? null : annotation.args.head;
+				if (value instanceof JCAssign) value = ((JCAssign) value).rhs;
+				if (!(value instanceof JCFieldAccess)) continue;
+				JCFieldAccess classLiteral = (JCFieldAccess) value;
+				if (!"class".equals(classLiteral.name.toString())) continue;
+				Type targetType = CLASS.resolveMember(typeNode, classLiteral.selected);
+				if (targetType != null) return targetType.tsym;
+			}
+			return null;
+		}
+
+		private boolean isTypedAnnotation(final JCAnnotation annotation) {
+			String name = annotation.annotationType.toString();
+			return "Typed".equals(name) || name.endsWith(".Typed");
+		}
+
 		private String methodNameOf(final JCMethodInvocation methodCall) {
 			if (methodCall.meth instanceof JCIdent) {
 				return ((JCIdent) methodCall.meth).name.toString();
