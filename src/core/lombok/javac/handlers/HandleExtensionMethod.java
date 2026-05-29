@@ -106,7 +106,7 @@ public class HandleExtensionMethod extends JavacAnnotationHandler<ExtensionMetho
 			if (!("class".equals(provider.name.toString()))) continue;
 			Type providerType = CLASS.resolveMember(typeNode, provider.selected);
 			if (providerType == null) continue;
-			if ((providerType.tsym.flags() & (INTERFACE | ANNOTATION)) != 0) continue;
+			if ((providerType.tsym.flags() & ANNOTATION) != 0) continue;
 			
 			extensions.add(getExtension(typeNode, (ClassType) providerType));
 		}
