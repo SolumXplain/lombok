@@ -126,6 +126,22 @@ public class JavacHandlerUtil {
 	}
 
 	/**
+	 * Like {@link #hasNullableAnnotations(JavacNode)}, but checks a separate list of annotations (e.g. the
+	 * annotations destined for a generated method's parameter). This is needed for {@code @Builder} setters,
+	 * whose generated builder field does not carry the original field's {@code @Nullable} annotation; the
+	 * annotation only survives on the parameter list.
+	 */
+	static boolean hasNullableAnnotations(JavacNode node, List<JCAnnotation> anns) {
+		if (anns == null) return false;
+		TypeResolver resolver = node.getImportListAsTypeResolver();
+		for (JCAnnotation ann : anns) {
+			String annotationTypeName = getTypeName(ann.annotationType);
+			if (resolver.typeMatches(node, "org.jspecify.annotations.Nullable", annotationTypeName)) return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Return true if the specified field or parameter node is determined as non-null according
 	 * to JSpecify rules, but does not account for @NullUnmarked complexity.
 	 */
