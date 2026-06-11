@@ -146,7 +146,12 @@ public class JavacHandlerUtil {
 	 * to JSpecify rules, but does not account for @NullUnmarked complexity.
 	 */
 	static boolean isNullMarked(JavacNode typeNode) {
-		if (hasAnnotation("org.jspecify.annotations.NullMarked", typeNode)) return true;
+		// @NullMarked applies to nested types as well, so walk up the enclosing types. This is needed for
+		// e.g. the @Builder class, whose own type node does not carry the annotation that sits on the class
+		// being built.
+		for (JavacNode node = typeNode; node != null; node = node.up()) {
+			if (node.getKind() == Kind.TYPE && hasAnnotation("org.jspecify.annotations.NullMarked", node)) return true;
+		}
 		java.util.List<PackageName> nullMarkedPackages = typeNode.getAst().readConfiguration(ConfigurationKeys.NULL_MARKED_PACKAGES);
 		PackageName packageName = PackageName.valueOf(typeNode.getPackageDeclaration());
     return nullMarkedPackages.contains(packageName);
