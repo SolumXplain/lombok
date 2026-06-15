@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2014-2025 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,30 +28,42 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
+import lombok.core.LombokConfiguration;
 import org.junit.Test;
 
 public class TestConfiguration {
-	
+
+
+	@Test
+	public void packageInfoShouldBeDetected() {
+    URI uri = new File("test/transform/resource/before/nullmarked").toURI();
+		List<PackageName> packages = LombokConfiguration.read(NULL_MARKED_PACKAGES, uri);
+		assertEquals(1, packages.size());
+		assertEquals("nullmarked", packages.get(0).getName());
+	}
+
 	@Test
 	public void testDisplayVerbose() throws Exception {
-		
+
 		@SuppressWarnings(value = {"all", "unchecked", "deprecation"})
 		Collection<ConfigurationKey<?>> keys = Arrays.asList(ACCESSORS_FLAG_USAGE, ACCESSORS_CHAIN, ACCESSORS_PREFIX, ADD_GENERATED_ANNOTATIONS, ADD_JAVAX_GENERATED_ANNOTATIONS, ANY_CONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES, LOG_ANY_FIELD_NAME, COPYABLE_ANNOTATIONS, ADD_NULL_ANNOTATIONS);
-		
+
 		String baseName = "test/configuration/resource/configurationRoot/";
 		File directory = new File(baseName);
 		String normalizedName = new File(directory.getAbsoluteFile().toURI().normalize()).toString().replace('\\', '/') + "/";
 		Collection<String> paths = Arrays.asList(normalizedName + "d1/d11", normalizedName + "d1/d12", normalizedName + "d1/d11/d111", normalizedName + "d1/d11/d111/f1.txt", normalizedName + "features/annotations");
-		
+
 		ByteArrayOutputStream rawOut = new ByteArrayOutputStream();
 		ByteArrayOutputStream rawErr = new ByteArrayOutputStream();
 		PrintStream outStream = new PrintStream(rawOut);
 		PrintStream errStream = new PrintStream(rawErr);
-		
+
 		ConfigurationFile.setEnvironment("env", normalizedName + "/e1");
 		String userHome = System.getProperty("user.home");
 		int result = -1;
@@ -61,13 +73,13 @@ public class TestConfiguration {
 		} finally {
 			System.setProperty("user.home", userHome);
 		}
-		
+
 		outStream.flush();
 		errStream.flush();
-		
+
 		String out = new String(rawOut.toByteArray()).replace('\\', '/').replace("\r", "").replaceAll(Pattern.quote(normalizedName) + "|" + Pattern.quote(baseName), "BASE/").trim();
 		String err = new String(rawErr.toByteArray()).replace('\\', '/').replace("\r", "").replaceAll(Pattern.quote(normalizedName) + "|" + Pattern.quote(baseName), "BASE/").trim();
-		
+
 		checkContent(directory, out, "out");
 		checkContent(directory, err, "err");
 		assertEquals(2, result);
@@ -84,7 +96,7 @@ public class TestConfiguration {
 		}
 		assertEquals(expected, actual);
 	}
-	
+
 	static String fileToString(File configFile) throws Exception {
 		byte[] b = new byte[65536];
 		FileInputStream fis = new FileInputStream(configFile);

@@ -1,0 +1,22 @@
+jdk:
+  - openjdk17
+
+before_install:
+  - sdk install java 17.0.12-oracle
+  - sdk use java 17.0.12-oracle
+  - wget https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.9-bin.zip
+  - unzip -q apache-ant-1.10.9-bin.zip
+  - export PATH=$PWD/apache-ant-1.10.9/bin:$PATH
+
+install:
+  - ant -Dlombok.version=$VERSION -Dlombok.fullversion=$VERSION maven
+  - mv ~/.m2 ~/.m2.bak
+  - mkdir -p ~/.m2/repository/org/projectlombok/lombok/1.18.42-SNAPSHOT
+  - cp build/lombok-$VERSION.pom ~/.m2/repository/org/projectlombok/lombok/1.18.42-SNAPSHOT/lombok-1.18.42-SNAPSHOT.pom
+  - cp dist/lombok-$VERSION.jar ~/.m2/repository/org/projectlombok/lombok/1.18.42-SNAPSHOT/lombok-$ARTIFACT-1.18.42-SNAPSHOT.jar
+  - cp dist/lombok-$VERSION-sources.jar ~/.m2/repository/org/projectlombok/lombok/1.18.42-SNAPSHOT/lombok-1.18.42-SNAPSHOT-sources.jar
+  - cp dist/lombok-$VERSION.jar ~/.m2/repository/org/projectlombok/lombok/1.18.42-SNAPSHOT/$ARTIFACT-1.18.42-SNAPSHOT.jar
+  - ls -l ~/.m2/repository/org/projectlombok/lombok/1.18.42-SNAPSHOT
+  - rm dist/spiProcessor.jar
+  - rm doc/*-pom.xml
+  - rm ivyCache/* lib/* docker/* build/* apache-ant-1.10.9/* -rf

@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2009-2024 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -39,16 +39,15 @@ import lombok.javac.Javac;
 
 public class DirectoryRunner extends Runner {
 	/** Add 1 or more file names to reduce the testset to just the named file(s). No files = test it all. */
-	private static final List<String> DEBUG_FOCUS_ON_FILE = Arrays.asList(
-		);
-	
+	private static final List<String> DEBUG_FOCUS_ON_FILE = Arrays.asList();
+
 	/*
 	 * If this is set to true, you are decreeing that all tests pass, and that any test that dares to say it does not, means the test is wrong and not lombok: The framework will <strong>update</strong> the 'target' so that it now passes.
 	 * This is, naturally, an exceedingly dangerous tool. The general way to use it is: First ensure all tests pass, then, do some minor refactor that massively impacts the tests, then, enable this, run the tests, then turn this off again,
 	 * then, thoroughly review your commit diff.
 	 */
 	private static final boolean ITS_ALL_GOOD = false;
-	
+
 	public enum Compiler {
 		DELOMBOK {
 			@Override public int getVersion() {
@@ -66,10 +65,10 @@ public class DirectoryRunner extends Runner {
 				return javaVersionString != null ? Integer.parseInt(javaVersionString) : Eclipse.getEcjCompilerVersion();
 			}
 		};
-		
+
 		public abstract int getVersion();
 	}
-	
+
 	public static abstract class TestParams {
 		public abstract Compiler getCompiler();
 		public abstract boolean printErrors();
@@ -80,20 +79,22 @@ public class DirectoryRunner extends Runner {
 		public int getVersion() {
 			return getCompiler().getVersion();
 		}
-		
+
 		public boolean accept(File file) {
 			return true;
 		}
-		
+
 		public abstract boolean expectChanges();
 		public String testNamePrefix() {
 			return "";
 		}
 	}
-	
+
 	private static final FileFilter JAVA_FILE_FILTER = new FileFilter() {
 		@Override public boolean accept(File file) {
-			if (!file.isFile() || !file.getName().endsWith(".java")) return false;
+			// Always omit package-info.java from tests because it's only there to control local tests
+			// (for now), and Lombok currently doesn't copy package annotations across
+			if (!file.isFile() || !file.getName().endsWith(".java") || file.getName().endsWith("package-info.java")) return false;
 			boolean positiveFilter = false;
 			for (String dfof : DEBUG_FOCUS_ON_FILE) {
 				if (dfof.isEmpty()) continue;
@@ -111,17 +112,17 @@ public class DirectoryRunner extends Runner {
 			return !positiveFilter;
 		}
 	};
-	
+
 	private final Description description;
 	private final Map<String, Description> tests = new TreeMap<String, Description>();
 	private final Throwable failure;
 	private final TestParams params;
-	
+
 	public DirectoryRunner(Class<?> testClass) throws Exception {
 		description = Description.createSuiteDescription(testClass);
-		
+
 		this.params = (TestParams) testClass.getConstructor().newInstance();
-		
+
 		Throwable error = null;
 		try {
 			addTests(testClass);
@@ -130,7 +131,7 @@ public class DirectoryRunner extends Runner {
 		}
 		this.failure = error;
 	}
-	
+
 	private void addTests(Class<?> testClass) throws Exception {
 		for (File file : params.getBeforeDirectory().listFiles(JAVA_FILE_FILTER)) {
 			if (!params.accept(file)) continue;
@@ -139,22 +140,22 @@ public class DirectoryRunner extends Runner {
 			tests.put(file.getName(), testDescription);
 		}
 	}
-	
+
 	@Override
 	public Description getDescription() {
 		return description;
 	}
-	
+
 	@Override
 	public void run(RunNotifier notifier) {
 		if (failure != null) {
 			reportInitializationFailure(notifier, description, failure);
 			return;
 		}
-		
+
 		for (Map.Entry<String, Description> entry : tests.entrySet()) {
 			Description testDescription = entry.getValue();
-			
+
 			FileTester tester;
 			try {
 				tester = createTester(entry.getKey());
@@ -162,12 +163,12 @@ public class DirectoryRunner extends Runner {
 				reportInitializationFailure(notifier, testDescription, e);
 				continue;
 			}
-			
+
 			if (tester == null) {
 				notifier.fireTestIgnored(testDescription);
 				continue;
 			}
-			
+
 			notifier.fireTestStarted(testDescription);
 			try {
 				tester.runTest();
@@ -177,13 +178,13 @@ public class DirectoryRunner extends Runner {
 			notifier.fireTestFinished(testDescription);
 		}
 	}
-	
+
 	private void reportInitializationFailure(RunNotifier notifier, Description description, Throwable throwable) {
 		notifier.fireTestStarted(description);
 		notifier.fireTestFailure(new Failure(description, throwable));
 		notifier.fireTestFinished(description);
 	}
-	
+
 	private FileTester createTester(String fileName) throws IOException {
 		File file = new File(params.getBeforeDirectory(), fileName);
 		switch (params.getCompiler()) {
@@ -197,7 +198,7 @@ public class DirectoryRunner extends Runner {
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	public interface FileTester {
 		void runTest() throws Throwable;
 	}
