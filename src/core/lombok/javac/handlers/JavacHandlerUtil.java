@@ -145,7 +145,7 @@ public class JavacHandlerUtil {
 	 * Return true if the specified type is within a {@code @NullMarked} context according
 	 * to JSpecify rules, but does not account for {@code @NullUnmarked} complexity.
 	 */
-	static boolean isNullMarked(JavacNode typeNode) {
+	static boolean inNullMarked(JavacNode typeNode) {
 		// @NullMarked applies to nested types as well, so walk up the enclosing types. This is needed for
 		// e.g. the @Builder class, whose own type node does not carry the annotation that sits on the class
 		// being built.
@@ -184,6 +184,13 @@ public class JavacHandlerUtil {
 
 	static boolean isJSpecifyNonNull(boolean isNullMarked, JavacNode node) {
 		return isNullMarked && !hasNullableAnnotations(node) && !hasSkipNullCheckAnnotation(node);
+	}
+
+	static boolean isJSpecifyNonNullField(JavacNode field, List<JCAnnotation> onParam) {
+		return inNullMarked(getParentTypeNode(field))
+				&& !hasNullableAnnotations(field)
+				&& !hasNullableAnnotations(field, onParam)
+				&& !hasSkipNullCheckAnnotation(field);
 	}
 
 	private static class MarkingScanner extends TreeScanner {
