@@ -246,16 +246,13 @@ public class HandleSetter extends JavacAnnotationHandler<Setter> {
 		long flags = JavacHandlerUtil.addFinalIfNeeded(Flags.PARAMETER, field.getContext());
 		JCExpression pType = cloneType(treeMaker, fieldDecl.vartype, source);
 		JCVariableDecl param = treeMaker.VarDef(treeMaker.Modifiers(flags, annsOnParam), paramName, pType, null);
-		if (!hasNonNullAnnotations(field) && !hasNonNullAnnotations(field, onParam) && (!isJSpecifyNonNull(isNullMarked(getParentTypeNode(field)), field))) {
-
-			statements.append(treeMaker.Exec(assign));
-		} else {
+    if (hasNonNullAnnotations(field) || hasNonNullAnnotations(field, onParam) || isJSpecifyNonNullField(field, onParam)) {
 			JCStatement nullCheck = generateNullCheck(treeMaker, fieldDecl.vartype, paramName, source, null);
 			if (nullCheck != null) statements.append(nullCheck);
-			statements.append(treeMaker.Exec(assign));
 		}
+    statements.append(treeMaker.Exec(assign));
 
-		if (booleanFieldToSet != null) {
+    if (booleanFieldToSet != null) {
 			JCAssign setBool = treeMaker.Assign(treeMaker.Ident(booleanFieldToSet), treeMaker.Literal(CTC_BOOLEAN, 1));
 			statements.append(treeMaker.Exec(setBool));
 		}

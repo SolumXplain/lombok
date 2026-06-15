@@ -255,7 +255,7 @@ public class HandleSetter extends EclipseAnnotationHandler<Setter> {
 
 		Annotation[] copyableAnnotations = findCopyableAnnotations(fieldNode);
 		List<Statement> statements = new ArrayList<Statement>(5);
-		if (!hasNonNullAnnotations(fieldNode) && !hasNonNullAnnotations(fieldNode, onParam) && !isJSpecifyNonNull(isNullMarked(getParentTypeNode(fieldNode)), fieldNode)) {
+		if (!hasNonNullAnnotations(fieldNode) && !hasNonNullAnnotations(fieldNode, onParam) && !isJSpecifyNonNull(inNullMarked(getParentTypeNode(fieldNode)), fieldNode)) {
 			statements.add(assignment);
 		} else {
 			Statement nullCheck = generateNullCheck(field.type, paramName, sourceNode, null);

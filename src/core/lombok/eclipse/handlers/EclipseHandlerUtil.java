@@ -801,7 +801,7 @@ public class EclipseHandlerUtil {
 		return hasAnnotation("org.jspecify.annotations.Nullable", node);
 	}
 
-	public static boolean isNullMarked(EclipseNode typeNode) {
+	public static boolean inNullMarked(EclipseNode typeNode) {
 		return hasAnnotation("org.jspecify.annotations.NullMarked", typeNode);
 	}
 
@@ -836,8 +836,8 @@ public class EclipseHandlerUtil {
 	 * (i.e. have NullMarked be the default but allow a custom annotation to trigger null checks at
 	 * system boundaries only).
 	 */
-	public static boolean isJSpecifyNonNull(boolean isNullMarked, EclipseNode node) {
-		return isNullMarked && !hasNullableAnnotations(node) && !hasSkipNullCheckAnnotation(node);
+	public static boolean isJSpecifyNonNull(boolean inNullMarked, EclipseNode node) {
+		return inNullMarked && !hasNullableAnnotations(node) && !hasSkipNullCheckAnnotation(node);
 	}
 
 	private static final Annotation[] EMPTY_ANNOTATIONS_ARRAY = new Annotation[0];

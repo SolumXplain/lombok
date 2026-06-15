@@ -126,11 +126,32 @@ public class JavacHandlerUtil {
 	}
 
 	/**
-	 * Return true if the specified field or parameter node is determined as non-null according
-	 * to JSpecify rules, but does not account for @NullUnmarked complexity.
+	 * Like {@link #hasNullableAnnotations(JavacNode)}, but checks a separate list of annotations (e.g. the
+	 * annotations destined for a generated method's parameter). This is needed for {@code @Builder} setters,
+	 * whose generated builder field does not carry the original field's {@code @Nullable} annotation; the
+	 * annotation only survives on the parameter list.
 	 */
-	static boolean isNullMarked(JavacNode typeNode) {
-		if (hasAnnotation("org.jspecify.annotations.NullMarked", typeNode)) return true;
+	static boolean hasNullableAnnotations(JavacNode node, List<JCAnnotation> anns) {
+		if (anns == null) return false;
+		TypeResolver resolver = node.getImportListAsTypeResolver();
+		for (JCAnnotation ann : anns) {
+			String annotationTypeName = getTypeName(ann.annotationType);
+			if (resolver.typeMatches(node, "org.jspecify.annotations.Nullable", annotationTypeName)) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Return true if the specified type is within a {@code @NullMarked} context according
+	 * to JSpecify rules, but does not account for {@code @NullUnmarked} complexity.
+	 */
+	static boolean inNullMarked(JavacNode typeNode) {
+		// @NullMarked applies to nested types as well, so walk up the enclosing types. This is needed for
+		// e.g. the @Builder class, whose own type node does not carry the annotation that sits on the class
+		// being built.
+		for (JavacNode node = typeNode; node != null; node = node.up()) {
+			if (node.getKind() == Kind.TYPE && hasAnnotation("org.jspecify.annotations.NullMarked", node)) return true;
+		}
 		java.util.List<PackageName> nullMarkedPackages = typeNode.getAst().readConfiguration(ConfigurationKeys.NULL_MARKED_PACKAGES);
 		PackageName packageName = PackageName.valueOf(typeNode.getPackageDeclaration());
     return nullMarkedPackages.contains(packageName);
@@ -163,6 +184,13 @@ public class JavacHandlerUtil {
 
 	static boolean isJSpecifyNonNull(boolean isNullMarked, JavacNode node) {
 		return isNullMarked && !hasNullableAnnotations(node) && !hasSkipNullCheckAnnotation(node);
+	}
+
+	static boolean isJSpecifyNonNullField(JavacNode field, List<JCAnnotation> onParam) {
+		return inNullMarked(getParentTypeNode(field))
+				&& !hasNullableAnnotations(field)
+				&& !hasNullableAnnotations(field, onParam)
+				&& !hasSkipNullCheckAnnotation(field);
 	}
 
 	private static class MarkingScanner extends TreeScanner {
