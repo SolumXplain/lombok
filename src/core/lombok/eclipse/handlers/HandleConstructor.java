@@ -403,7 +403,7 @@ public class HandleConstructor {
 		List<Argument> params = new ArrayList<Argument>();
 		List<Statement> assigns = new ArrayList<Statement>();
 		List<Statement> nullChecks = new ArrayList<Statement>();
-		boolean isNullMarked = isNullMarked(type);
+		boolean inNullMarked = inNullMarked(type);
 		for (EclipseNode fieldNode : fieldsToParam) {
 			FieldDeclaration field = (FieldDeclaration) fieldNode.get();
 			char[] rawName = field.name;
@@ -421,7 +421,7 @@ public class HandleConstructor {
 			long fieldPos = (((long) field.sourceStart) << 32) | field.sourceEnd;
 			Argument parameter = new Argument(fieldName, fieldPos, copyType(field.type, source), Modifier.FINAL);
 			Annotation[] copyableAnnotations = findCopyableAnnotations(fieldNode);
-			if (hasNonNullAnnotations(fieldNode) || isJSpecifyNonNull(isNullMarked, fieldNode)) {
+			if (hasNonNullAnnotations(fieldNode) || isJSpecifyNonNull(inNullMarked, fieldNode)) {
 				Statement nullCheck = generateNullCheck(parameter, sourceNode, null);
 				if (nullCheck != null) nullChecks.add(nullCheck);
 			}
