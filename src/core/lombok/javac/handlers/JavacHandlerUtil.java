@@ -142,8 +142,8 @@ public class JavacHandlerUtil {
 	}
 
 	/**
-	 * Return true if the specified field or parameter node is determined as non-null according
-	 * to JSpecify rules, but does not account for @NullUnmarked complexity.
+	 * Return true if the specified type is within a {@code @NullMarked} context according
+	 * to JSpecify rules, but does not account for {@code @NullUnmarked} complexity.
 	 */
 	static boolean isNullMarked(JavacNode typeNode) {
 		// @NullMarked applies to nested types as well, so walk up the enclosing types. This is needed for
